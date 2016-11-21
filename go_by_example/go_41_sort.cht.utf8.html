@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 排序</title>
+</head>
+<body>
+<p>Go的sort包實現了內置數據類型和用戶自定義數據類型的排序功能。我們先看看內置數據類型的排序。</p>
+<pre><code>package main
+
+import "fmt"
+import "sort"
+
+func main() {
+
+    // 這些排序方法都是針對內置數據類型的。
+    // 這裡的排序方法都是就地排序，也就是說排序改變了
+    // 切片內容，而不是返回一個新的切片
+    strs := []string{"c", "a", "b"}
+    sort.Strings(strs)
+    fmt.Println("Strings:", strs)
+
+    // 對於整型的排序
+    ints := []int{7, 2, 4}
+    sort.Ints(ints)
+    fmt.Println("Ints:   ", ints)
+
+    // 我們還可以檢測切片是否已經排序好
+    s := sort.IntsAreSorted(ints)
+    fmt.Println("Sorted: ", s)
+}
+</code></pre>
+<p>輸出結果</p>
+<pre><code>Strings: [a b c]
+Ints:    [2 4 7]
+Sorted:  true
+</code></pre></body>
+</html>

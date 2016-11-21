@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 進程觸發</title>
+</head>
+<body>
+<p>有的時候，我們需要從Go程序裡面觸發一個其他的非Go進程來執行。</p>
+<pre><code>package main
+
+import "fmt"
+import "io/ioutil"
+import "os/exec"
+
+func main() {
+
+    // 我們從一個簡單的命令開始，這個命令不需要任何參數
+    // 或者輸入，僅僅向stdout輸出一些信息。`exec.Command`
+    // 函數創建了一個代表外部進程的對象
+    dateCmd := exec.Command("date")
+
+    // `Output`是另一個運行命令時用來處理信息的函數，這個
+    // 函數等待命令結束，然後收集命令輸出。如果沒有錯誤發
+    // 生的話，`dateOut`將保存date的信息
+    dateOut, err := dateCmd.Output()
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println("&gt; date")
+    fmt.Println(string(dateOut))
+
+    // 下面我們看一個需要從stdin輸入數據的命令，我們將
+    // 數據輸入傳給外部進程的stdin，然後從它輸出到stdout
+    // 的運行結果收集信息
+    grepCmd := exec.Command("grep", "hello")
+
+    // 這裡我們顯式地獲取input/output管道，啟動進程，
+    // 向進程寫入數據，然後讀取輸出結果，最後等待進程結束
+    grepIn, _ := grepCmd.StdinPipe()
+    grepOut, _ := grepCmd.StdoutPipe()
+    grepCmd.Start()
+    grepIn.Write([]byte("hello grep\ngoodbye grep"))
+    grepIn.Close()
+    grepBytes, _ := ioutil.ReadAll(grepOut)
+    grepCmd.Wait()
+
+    // 在上面的例子中，我們忽略了錯誤檢測，但是你一樣可以
+    // 使用`if err!=nil`模式來進行處理。另外我們僅僅收集了
+    // `StdoutPipe`的結果，同時你也可以用一樣的方法來收集
+    // `StderrPipe`的結果
+    fmt.Println("&gt; grep hello")
+    fmt.Println(string(grepBytes))
+
+    // 注意，我們在觸發外部命令的時候，需要顯式地提供
+    // 命令和參數信息。另外如果你想用一個命令行字符串
+    // 觸發一個完整的命令，你可以使用bash的-c選項
+    lsCmd := exec.Command("bash", "-c", "ls -a -l -h")
+    lsOut, err := lsCmd.Output()
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println("&gt; ls -a -l -h")
+    fmt.Println(string(lsOut))
+}
+</code></pre>
+<p>所觸發的程序的執行結果和我們直接執行這些程序的結果是一樣的。
+運行結果</p>
+<pre><code>&gt; date
+Wed Oct 10 09:53:11 PDT 2012
+&gt; grep hello
+hello grep
+&gt; ls -a -l -h
+drwxr-xr-x  4 mark 136B Oct 3 16:29 .
+drwxr-xr-x 91 mark 3.0K Oct 3 12:50 ..
+-rw-r--r--  1 mark 1.3K Oct 3 16:28 spawning-processes.go
+</code></pre></body>
+</html>

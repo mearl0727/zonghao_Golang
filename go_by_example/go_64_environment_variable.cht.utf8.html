@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 環境變量</title>
+</head>
+<body>
+<p>環境變量是一種很普遍的將配置信息傳遞給Unix程序的機制。</p>
+<pre><code>package main
+
+import "os"
+import "strings"
+import "fmt"
+func main() {
+    // 為了設置一個key/value對，使用`os.Setenv`
+    // 為了獲取一個key的value，使用`os.Getenv`
+    // 如果所提供的key在環境變量中沒有對應的value，
+    // 那麼返回空字符串
+    os.Setenv("FOO", "1")
+    fmt.Println("FOO:", os.Getenv("FOO"))
+    fmt.Println("BAR:", os.Getenv("BAR"))
+
+    // 使用`os.Environ`來列出環境變量中所有的key/value對
+    // 你可以使用`strings.Split`方法來將key和value分開
+    // 這裡我們打印所有的key
+    fmt.Println()
+    for _, e := range os.Environ() {
+        pair := strings.Split(e, "=")
+        fmt.Println(pair[0])
+    }
+}
+</code></pre>
+<p>這裡我們設置了FOO環境變量，所以我們取到了它的值，但是沒有設置BAR環境變量，所以值為空。另外我們列出了系統的所有環境變量，當然這個輸出根據不同的系統設置可能並不相同。</p>
+<p>輸出結果</p>
+<pre><code>FOO: 1
+BAR:
+
+TERM_PROGRAM
+TERM
+SHELL
+TMPDIR
+Apple_PubSub_Socket_Render
+OLDPWD
+USER
+SSH_AUTH_SOCK
+__CF_USER_TEXT_ENCODING
+__CHECKFIX1436934
+PATH
+PWD
+ITERM_PROFILE
+SHLVL
+COLORFGBG
+HOME
+ITERM_SESSION_ID
+LOGNAME
+LC_CTYPE
+GOPATH
+_
+FOO
+</code></pre></body>
+</html>

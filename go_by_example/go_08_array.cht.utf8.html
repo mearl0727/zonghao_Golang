@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 數組</title>
+</head>
+<body>
+<p>數組是一個具有<code>相同數據類型</code>的元素組成的<code>固定長度</code>的<code>有序集合</code>。</p>
+<p>在Go語言中，數組是值類型，長度是類型的組成部分，也就是說"<code>[10]int</code>"和「<code>[20]int</code>」是完全不同的兩種數組類型。</p>
+<p>同類型的兩個數組支持"=="和"!="比較，但是不能比較大小。</p>
+<p>數組作為參數時，函數內部不改變數組內部的值，除非是傳入數組的指針。</p>
+<p>數組的指針：*[3]int  </p>
+<p>指針數組：[2]*int</p>
+
+<p>示例1：</p>
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+
+    // 這裡我們創建了一個具有5個元素的整型數組
+    // 元素的數據類型和數組長度都是數組的一部分
+    // 默認情況下，數組元素都是零值
+    // 對於整數，零值就是0
+    var a [5]int
+    fmt.Println("emp:", a)
+
+    // 我們可以使用索引來設置數組元素的值，就像這樣
+    // "array[index] = value"  或者使用索引來獲取元素值，
+    // 就像這樣"array[index]"
+    a[4] = 100
+    fmt.Println("set:", a)
+    fmt.Println("get:", a[4])
+
+    // 內置的len函數返回數組的長度
+    fmt.Println("len:", len(a))
+
+    // 這種方法可以同時定義和初始化一個數組
+    b := [5]int{1, 2, 3, 4, 5}
+    fmt.Println("dcl:", b)
+
+    // 數組都是一維的，但是你可以把數組的元素定義為一個數組
+    // 來獲取多維數組結構
+    var twoD [2][3]int
+    for i := 0; i &lt; 2; i++ {
+        for j := 0; j &lt; 3; j++ {
+            twoD[i][j] = i + j
+        }
+    }
+    fmt.Println("2d: ", twoD)
+}
+</code></pre>
+<p>輸出結果為</p>
+<pre><code>emp: [0 0 0 0 0]
+set: [0 0 0 0 100]
+get: 100
+len: 5
+dcl: [1 2 3 4 5]
+2d:  [[0 1 2] [1 2 3]]
+</code></pre>
+<p><code>擁有固定長度</code>是數組的一個特點，但是這個特點有時候會帶來很多不便，尤其在一個集合元素個數不固定的情況下。這個時候我們更多地使用<code>切片</code>。</p>
+<p>示例2：</p>
+<p>可以用new創建數組，並返回數組的指針</p>
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+    var a = new([5]int)
+    test(a)
+    fmt.Println(a, len(a))
+}
+
+func test(a *[5]int) {
+    a[1] = 5
+}
+</code></pre>
+<p>輸出結果：</p>
+<pre><code>&amp;[0 5 0 0 0] 5
+</code></pre>
+<p>示例3：</p>
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+    a := [...]User{
+        {0, "User0"},
+        {8, "User8"},
+    }
+    b := [...]*User{
+        {0, "User0"},
+        {8, "User8"},
+    }
+    fmt.Println(a, len(a))
+    fmt.Println(b, len(b))
+
+}
+
+type User struct {
+    Id   int
+    Name string
+}
+</code></pre>
+<p>輸出結果：</p>
+<pre><code>[{0 User0} {8 User8}] 2
+[0x1f216130 0x1f216140] 2
+</code></pre></body>
+</html>

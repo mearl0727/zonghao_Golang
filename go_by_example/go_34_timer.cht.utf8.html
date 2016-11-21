@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 計時器</title>
+</head>
+<body>
+<p>我們有的時候希望Go在未來的某個時刻執行或者是以一定的時間間隔重復執行。Go內置的timer和ticker功能使得這些任務變得簡單了。我們先看看timer的功能，下一節再看看ticker的功能。</p>
+<pre><code>package main
+
+import "time"
+import "fmt"
+
+func main() {
+    // Timer 代表了未來的一個事件，你告訴timer需要等待多久，然後
+    // 計時器提供了一個通道，這個通道將在等待的時間結束後得到通知，
+    // 這裡的timer將等待2秒
+    timer1 := time.NewTimer(time.Second * 2)
+
+    // 這裡`&lt;-timer1.C`在timer的通道`C`上面阻塞等待，直到有個值發送給該
+    // 通道，通知通道計時器已經等待完成。
+    // timer.NewTimer方法獲取的timer1的結構體定義為
+    // type Ticket struct{
+    //  C &lt;-chan Time
+    //}
+    &lt;-timer1.C
+    fmt.Println("Timer 1 expired")
+
+    // 如果你僅僅需要等待的話，你可以使用`time.Sleep`，而timer的
+    // 獨特之處在於你可以在timer等待完成之前取消等待。
+    timer2 := time.NewTimer(time.Second)
+    go func() {
+        &lt;-timer2.C
+        fmt.Println("Timer 2 expired")
+    }()
+    stop2 := timer2.Stop()
+    if stop2 {
+        fmt.Println("Timer 2 stopped")
+    }
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>Timer 1 expired
+Timer 2 stopped
+</code></pre>
+<p>在上面的例子中，第一個timer將在2秒後等待完成而第二個timer則在等待完成之前被取消了。</p></body>
+</html>

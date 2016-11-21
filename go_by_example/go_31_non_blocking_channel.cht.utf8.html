@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 非阻塞通道</title>
+</head>
+<body>
+<p>默認情況下，通道發送和接收數據是阻塞的。然而我們可以使用select的一個default的選項來實現無阻塞發送或接收數據，甚至可以將多個select的case選項和default選項結合起來使用。</p>
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+    messages := make(chan string)
+    signals := make(chan bool)
+
+    // 這裡是一個非阻塞的從通道接收數據，如果messages通道有數據
+    // 可以接收，那麼select將運行`&lt;-messages`這個case，否則的話
+    // 程序立刻執行default選項後面的語句
+    select {
+    case msg := &lt;-messages:
+        fmt.Println("received message", msg)
+    default:
+        fmt.Println("no message received")
+    }
+
+    // 非阻塞通道發送數據也是一樣的
+    msg := "hi"
+    select {
+    case messages &lt;- msg:
+        fmt.Println("sent message", msg)
+    default:
+        fmt.Println("no message sent")
+    }
+
+    // 在default前面，我們可以有多個case選項，從而實現多通道
+    // 非阻塞的選擇，這裡我們嘗試從messages和signals接收數據
+    // 如果有數據可以接收，那麼執行對應case後面的邏輯，否則立刻
+    // 執行default選項後面的邏輯
+    select {
+    case msg := &lt;-messages:
+        fmt.Println("received message", msg)
+    case sig := &lt;-signals:
+        fmt.Println("received signal", sig)
+    default:
+        fmt.Println("no activity")
+    }
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>no message received
+no message sent
+no activity
+</code></pre>
+<p>這個例子中，由於我們使用了default來實現非阻塞的通道，所以開始的時候messages裡面沒有數據可以接收，直接輸出<code>no message received</code>，而第二次由於messages通道沒有相應的數據接收方，所以也不會寫入數據，直接轉到default，輸出<code>no message sent</code>，至於第三個就很好理解了，什麼也沒有，輸出<code>no activity</code>。
+其實，我們可以把這個例子修改一下，讓messages通道帶緩沖區，這樣例子或許更好理解一點。定義messages的時候使用<code>messages := make(chan string, 1)</code>。</p>
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+    messages := make(chan string, 1)
+    signals := make(chan bool)
+
+    // 這裡是一個非阻塞的從通道接收數據，如果messages通道有數據
+    // 可以接收，那麼select將運行`&lt;-messages`這個case，否則的話
+    // 程序立刻執行default選項後面的語句
+    select {
+    case msg := &lt;-messages:
+        fmt.Println("received message", msg)
+    default:
+        fmt.Println("no message received")
+    }
+
+    // 非阻塞通道發送數據也是一樣的,但是由於messages帶了緩沖區，
+    // 即使沒有數據接受端也可以發送數據，所以這裡的`messages&lt;-msg`
+    // 會被執行，從而不再跳到default去了。
+    msg := "hi"
+    select {
+    case messages &lt;- msg:
+        fmt.Println("sent message", msg)
+    default:
+        fmt.Println("no message sent")
+    }
+
+    // 在default前面，我們可以有多個case選項，從而實現多通道
+    // 非阻塞的選擇，這裡我們嘗試從messages和signals接收數據
+    // 如果有數據可以接收，那麼執行對應case後面的邏輯，否則立刻
+    // 執行default選項後面的邏輯
+    select {
+    case msg := &lt;-messages:
+        fmt.Println("received message", msg)
+    case sig := &lt;-signals:
+        fmt.Println("received signal", sig)
+    default:
+        fmt.Println("no activity")
+    }
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>no message received
+sent message hi
+received message hi
+</code></pre></body>
+</html>

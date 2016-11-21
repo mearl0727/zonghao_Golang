@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 並行功能</title>
+</head>
+<body>
+<p>goroutine是一個輕量級的線程。</p>
+<pre><code>package main
+
+import "fmt"
+
+func f(from string) {
+    for i := 0; i &lt; 3; i++ {
+        fmt.Println(from, ":", i)
+    }
+}
+
+func main() {
+
+    // 假設我們有一個函數叫做f(s)
+    // 這裡我們使用通常的同步調用來調用函數
+    f("direct")
+
+    // 為了能夠讓這個函數以協程(goroutine)方式
+    // 運行使用go f(s)
+    // 這個協程將和調用它的協程並行執行
+    go f("goroutine")
+
+    // 你也可以為匿名函數開啟一個協程運行
+    go func(msg string) {
+        fmt.Println(msg)
+    }("going")
+
+    // 上面的協程在調用之後就異步執行了，所以程序不用等待它們執行完成
+    // 就跳到這裡來了，下面的Scanln用來從命令行獲取一個輸入，然後才
+    // 讓main函數結束
+    // 如果沒有下面的Scanln語句，程序到這裡會直接退出，而上面的協程還
+    // 沒有來得及執行完，你將無法看到上面兩個協程運行的結果
+    var input string
+    fmt.Scanln(&amp;input)
+    fmt.Println("done")
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>direct : 0
+direct : 1
+direct : 2
+goroutine : 0
+goroutine : 1
+goroutine : 2
+going
+ok
+done
+</code></pre></body>
+</html>

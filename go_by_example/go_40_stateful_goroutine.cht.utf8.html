@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 狀態協程</title>
+</head>
+<body>
+<p>在上面的例子中，我們演示了如何通過使用mutex來在多個協程之間共享狀態。另外一種方法是使用協程內置的同步機制來實現。這種基於通道的方法和Go的通過消息共享內存，保證每份數據為單獨的協程所有的理念是一致的。</p>
+<pre><code>package main
+
+import (
+    "fmt"
+    "math/rand"
+    "sync/atomic"
+    "time"
+)
+
+// 在這個例子中，將有一個單獨的協程擁有這個狀態。這樣可以
+// 保證這個數據不會被並行訪問所破壞。為了讀寫這個狀態，其
+// 他的協程將向這個協程發送信息並且相應地接受返回信息。
+// 這些`readOp`和`writeOp`結構體封裝了這些請求和回復
+type readOp struct {
+    key  int
+    resp chan int
+}
+type writeOp struct {
+    key  int
+    val  int
+    resp chan bool
+}
+
+func main() {
+
+    // 我們將計算我們執行了多少次操作
+    var ops int64 = 0
+
+    // reads和writes通道將被其他協程用來從中讀取或寫入數據
+    reads := make(chan *readOp)
+    writes := make(chan *writeOp)
+
+    // 這個是擁有`state`的協程，`state`是一個協程的私有map
+    // 變量。這個協程不斷地`select`通道`reads`和`writes`，
+    // 當有請求來臨的時候進行回復。一旦有請求，首先執行所
+    // 請求的操作，然後給`resp`通道發送一個表示請求成功的值。
+    go func() {
+        var state = make(map[int]int)
+        for {
+            select {
+            case read := &lt;-reads:
+                read.resp &lt;- state[read.key]
+            case write := &lt;-writes:
+                state[write.key] = write.val
+                write.resp &lt;- true
+            }
+        }
+    }()
+
+    // 這裡啟動了100個協程來向擁有狀態的協程請求讀數據。
+    // 每次讀操作都需要創建一個`readOp`，然後發送到`reads`
+    // 通道，然後等待接收請求回復
+    for r := 0; r &lt; 100; r++ {
+        go func() {
+            for {
+                read := &amp;readOp{
+                    key:  rand.Intn(5),
+                    resp: make(chan int)}
+                reads &lt;- read
+                &lt;-read.resp
+                atomic.AddInt64(&amp;ops, 1)
+            }
+        }()
+    }
+
+    // 我們開啟10個寫協程
+    for w := 0; w &lt; 10; w++ {
+        go func() {
+            for {
+                write := &amp;writeOp{
+                    key:  rand.Intn(5),
+                    val:  rand.Intn(100),
+                    resp: make(chan bool)}
+                writes &lt;- write
+                &lt;-write.resp
+                atomic.AddInt64(&amp;ops, 1)
+            }
+        }()
+    }
+
+    // 讓協程運行1秒鍾
+    time.Sleep(time.Second)
+
+    // 最後輸出操作數量ops的值
+    opsFinal := atomic.LoadInt64(&amp;ops)
+    fmt.Println("ops:", opsFinal)
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>ops: 880578
+</code></pre>
+<p>運行這個程序，我們會看到基於協程的狀態管理每秒可以處理800, 000個操作。對於這個例子來講，基於協程的方法比基於mutex的方法更加復雜一點。當然在某些情況下還是很有用的。例如你有很多復雜的協程，而且管理多個mutex可能導致錯誤。
+當然你可以選擇使用任意一種方法，只要你保證這種方法讓你覺得很舒服而且也能保證程序的正確性。</p></body>
+</html>

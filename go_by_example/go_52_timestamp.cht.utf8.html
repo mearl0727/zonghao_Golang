@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 時間戳</title>
+</head>
+<body>
+<p>程序的一個通常需求是計算從Unix起始時間開始到某個時刻的秒數，毫秒數，微秒數等。
+我們來看看Go裡面是怎麼做的。</p>
+<pre><code>package main
+
+import "fmt"
+import "time"
+
+func main() {
+
+    // 使用Unix和UnixNano來分別獲取從Unix起始時間
+    // 到現在所經過的秒數和微秒數
+    now := time.Now()
+    secs := now.Unix()
+    nanos := now.UnixNano()
+    fmt.Println(now)
+
+    // 注意這裡沒有UnixMillis方法，所以我們需要將
+    // 微秒手動除以一個數值來獲取毫秒
+    millis := nanos / 1000000
+    fmt.Println(secs)
+    fmt.Println(millis)
+    fmt.Println(nanos)
+
+    // 反過來，你也可以將一個整數秒數或者微秒數轉換
+    // 為對應的時間
+    fmt.Println(time.Unix(secs, 0))
+    fmt.Println(time.Unix(0, nanos))
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>2014-03-02 23:11:31.118666918 +0800 CST
+1393773091
+1393773091118
+1393773091118666918
+2014-03-02 23:11:31 +0800 CST
+2014-03-02 23:11:31.118666918 +0800 CST
+</code></pre></body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 互斥</title>
+</head>
+<body>
+<p>上面的例子中，我們看過了如何在多個協程之間原子地訪問計數器，對於更復雜的例子，我們可以使用<code>Mutex</code>來在多個協程之間安全地訪問數據。</p>
+<pre><code>package main
+
+import (
+    "fmt"
+    "math/rand"
+    "runtime"
+    "sync"
+    "sync/atomic"
+    "time"
+)
+
+func main() {
+
+    // 這個例子的狀態就是一個map
+    var state = make(map[int]int)
+
+    // 這個`mutex`將同步對狀態的訪問
+    var mutex = &amp;sync.Mutex{}
+
+    // ops將對狀態的操作進行計數
+    var ops int64 = 0
+    // 這裡我們啟動100個協程來不斷地讀取這個狀態
+    for r := 0; r &lt; 100; r++ {
+        go func() {
+            total := 0
+            for {
+
+                // 對於每次讀取，我們選取一個key來訪問，
+                // mutex的`Lock`函數用來保證對狀態的
+                // 唯一性訪問，訪問結束後，使用`Unlock`
+                // 來解鎖，然後增加ops計數器
+                key := rand.Intn(5)
+                mutex.Lock()
+                total += state[key]
+                mutex.Unlock()
+                atomic.AddInt64(&amp;ops, 1)
+
+                // 為了保證這個協程不會讓調度器出於飢餓狀態，
+                // 我們顯式地使用`runtime.Gosched`釋放了資源
+                // 控制權，這種控制權會在通道操作結束或者
+                // time.Sleep結束後自動釋放。但是這裡我們需要
+                // 手動地釋放資源控制權
+                runtime.Gosched()
+            }
+        }()
+    }
+    // 同樣我們使用10個協程來模擬寫狀態
+    for w := 0; w &lt; 10; w++ {
+        go func() {
+            for {
+                key := rand.Intn(5)
+                val := rand.Intn(100)
+                mutex.Lock()
+                state[key] = val
+                mutex.Unlock()
+                atomic.AddInt64(&amp;ops, 1)
+                runtime.Gosched()
+            }
+        }()
+    }
+
+    // 主協程Sleep，讓那10個協程能夠運行一段時間
+    time.Sleep(time.Second)
+
+    // 輸出總操作次數
+    opsFinal := atomic.LoadInt64(&amp;ops)
+    fmt.Println("ops:", opsFinal)
+
+    // 最後鎖定並輸出狀態
+    mutex.Lock()
+    fmt.Println("state:", state)
+    mutex.Unlock()
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>ops: 3931611
+state: map[0:84 2:20 3:18 1:65 4:31]
+</code></pre></body>
+</html>

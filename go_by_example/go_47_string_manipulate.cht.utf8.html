@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 字符串操作函數</title>
+</head>
+<body>
+<p>strings 標准庫提供了很多字符串操作相關的函數。這裡提供的幾個例子是讓你先對這個包有個基本了解。</p>
+<pre><code>package main
+
+import s "strings"
+import "fmt"
+
+// 這裡給fmt.Println起個別名，因為下面我們會多處使用。
+var p = fmt.Println
+
+func main() {
+
+    // 下面是strings包裡面提供的一些函數實例。注意這裡的函數並不是
+    // string對象所擁有的方法，這就是說使用這些字符串操作函數的時候
+    // 你必須將字符串對象作為第一個參數傳遞進去。
+    p("Contains:  ", s.Contains("test", "es"))
+    p("Count:     ", s.Count("test", "t"))
+    p("HasPrefix: ", s.HasPrefix("test", "te"))
+    p("HasSuffix: ", s.HasSuffix("test", "st"))
+    p("Index:     ", s.Index("test", "e"))
+    p("Join:      ", s.Join([]string{"a", "b"}, "-"))
+    p("Repeat:    ", s.Repeat("a", 5))
+    p("Replace:   ", s.Replace("foo", "o", "0", -1))
+    p("Replace:   ", s.Replace("foo", "o", "0", 1))
+    p("Split:     ", s.Split("a-b-c-d-e", "-"))
+    p("ToLower:   ", s.ToLower("TEST"))
+    p("ToUpper:   ", s.ToUpper("test"))
+    p()
+
+    // 你可以在strings包裡面找到更多的函數
+
+    // 這裡還有兩個字符串操作方法，它們雖然不是strings包裡面的函數，
+    // 但是還是值得提一下。一個是獲取字符串長度，另外一個是從字符串中
+    // 獲取指定索引的字符
+    p("Len: ", len("hello"))
+    p("Char:", "hello"[1])
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>Contains:   true
+Count:      2
+HasPrefix:  true
+HasSuffix:  true
+Index:      1
+Join:       a-b
+Repeat:     aaaaa
+Replace:    f00
+Replace:    f0o
+Split:      [a b c d e]
+ToLower:    test
+ToUpper:    TEST
+
+Len:  5
+Char: 101
+</code></pre></body>
+</html>

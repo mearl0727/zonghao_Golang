@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 可變長參數列表</title>
+</head>
+<body>
+<p>支持可變長參數列表的函數可以支持任意個傳入參數，比如fmt.Println函數就是一個支持可變長參數列表的函數。</p>
+<pre><code>package main
+
+import "fmt"
+
+// 這個函數可以傳入任意數量的整型參數
+func sum(nums ...int) {
+    fmt.Print(nums, " ")
+    total := 0
+    for _, num := range nums {
+        total += num
+    }
+    fmt.Println(total)
+}
+
+func main() {
+
+    // 支持可變長參數的函數調用方法和普通函數一樣
+    // 也支持只有一個參數的情況
+    sum(1, 2)
+    sum(1, 2, 3)
+
+    // 如果你需要傳入的參數在一個切片中，像下面一樣
+    // "func(slice...)"把切片打散傳入
+    nums := []int{1, 2, 3, 4}
+    sum(nums...)
+}
+</code></pre>
+<p>輸出結果為</p>
+<pre><code>[1 2] 3
+[1 2 3] 6
+[1 2 3 4] 10
+</code></pre>
+<p>需要注意的是，可變長參數應該是函數定義的最右邊的參數，即最後一個參數。</p></body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 超時</title>
+</head>
+<body>
+<p>超時對那些連接外部資源的程序來說是很重要的，否則就需要限定執行時間。在Go裡面實現超時很簡單。我們可以使用channel和select很容易地做到。</p>
+<pre><code>package main
+
+import "time"
+import "fmt"
+
+func main() {
+
+    // 在這個例子中，假設我們執行了一個外部調用，2秒之後將結果寫入c1
+    c1 := make(chan string, 1)
+    go func() {
+        time.Sleep(time.Second * 2)
+        c1 &lt;- "result 1"
+    }()
+
+    // 這裡使用select來實現超時，`res := &lt;-c1`等待通道結果，
+    // `&lt;- Time.After`則在等待1秒後返回一個值，因為select首先
+    // 執行那些不再阻塞的case，所以這裡會執行超時程序，如果
+    // `res := &lt;-c1`超過1秒沒有執行的話
+    select {
+    case res := &lt;-c1:
+        fmt.Println(res)
+    case &lt;-time.After(time.Second * 1):
+        fmt.Println("timeout 1")
+    }
+
+    // 如果我們將超時時間設為3秒，這個時候`res := &lt;-c2`將在
+    // 超時case之前執行，從而能夠輸出寫入通道c2的值
+    c2 := make(chan string, 1)
+    go func() {
+        time.Sleep(time.Second * 2)
+        c2 &lt;- "result 2"
+    }()
+    select {
+    case res := &lt;-c2:
+        fmt.Println(res)
+    case &lt;-time.After(time.Second * 3):
+        fmt.Println("timeout 2")
+    }
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>timeout 1
+result 2
+</code></pre></body>
+</html>

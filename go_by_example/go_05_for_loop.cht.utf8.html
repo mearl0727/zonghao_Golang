@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go for循環</title>
+</head>
+<body>
+<p>for循環是Go語言唯一的循環結構。這裡有三個基本的for循環類型。</p>
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+
+    // 最基本的一種，單一條件循環
+    // 這個可以代替其他語言的while循環
+    i := 1
+    for i &lt;= 3 {
+        fmt.Println(i)
+        i = i + 1
+    }
+
+    // 經典的循環條件初始化/條件判斷/循環後條件變化
+    for j := 7; j &lt;= 9; j++ {
+        fmt.Println(j)
+    }
+
+    // 無條件的for循環是死循環，除非你使用break跳出循環或者
+    // 使用return從函數返回
+    for {
+        fmt.Println("loop")
+        break
+    }
+}
+</code></pre>
+<p>輸出結果</p>
+<pre><code>1
+2
+3
+7
+8
+9
+loop
+</code></pre>
+<p>在後面的例子中，你將會看到其他的循環方式，比如使用range函數循環數組，切片和字典，或者用select函數循環channel通道。</p></body>
+</html>

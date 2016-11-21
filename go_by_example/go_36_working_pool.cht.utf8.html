@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 工作池</title>
+</head>
+<body>
+<p>在這個例子中，我們來看一下如何使用gorouotine和channel來實現工作池。</p>
+<pre><code>package main
+
+import "fmt"
+import "time"
+
+// 我們將在worker函數裡面運行幾個並行實例，這個函數從jobs通道
+// 裡面接受任務，然後把運行結果發送到results通道。每個job我們
+// 都休眠一會兒，來模擬一個耗時任務。
+func worker(id int, jobs &lt;-chan int, results chan&lt;- int) {
+    for j := range jobs {
+        fmt.Println("worker", id, "processing job", j)
+        time.Sleep(time.Second)
+        results &lt;- j * 2
+    }
+}
+
+func main() {
+
+    // 為了使用我們的工作池，我們需要發送工作和接受工作的結果，
+    // 這裡我們定義兩個通道，一個jobs，一個results
+    jobs := make(chan int, 100)
+    results := make(chan int, 100)
+
+    // 這裡啟動3個worker協程，一開始的時候worker阻塞執行，因為
+    // jobs通道裡面還沒有工作任務
+    for w := 1; w &lt;= 3; w++ {
+        go worker(w, jobs, results)
+    }
+
+    // 這裡我們發送9個任務，然後關閉通道，告知任務發送完成
+    for j := 1; j &lt;= 9; j++ {
+        jobs &lt;- j
+    }
+    close(jobs)
+
+    // 然後我們從results裡面獲得結果
+    for a := 1; a &lt;= 9; a++ {
+        &lt;-results
+    }
+</code></pre>
+<p>運行結果</p>
+<pre><code>worker 1 processing job 1
+worker 2 processing job 2
+worker 3 processing job 3
+worker 1 processing job 4
+worker 3 processing job 5
+worker 2 processing job 6
+worker 1 processing job 7
+worker 3 processing job 8
+worker 2 processing job 9
+</code></pre></body>
+</html>

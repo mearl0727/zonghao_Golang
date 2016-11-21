@@ -1,0 +1,547 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go並行計算</title>
+
+</head>
+<body>
+<p>如果說Go有什麼讓人一見鍾情的特性，那大概就是並行計算了吧。</p>
+
+<p>做個題目</p>
+
+<blockquote><p>如果我們列出10以下所有能夠被3或者5整除的自然數，那麼我們得到的是3，5，6和9。這四個數的和是23。
+那麼請計算1000以下（不包括1000）的所有能夠被3或者5整除的自然數的和。</p></blockquote>
+
+<p>這個題目的一個思路就是：</p>
+
+<p>(1) 先計算1000以下所有能夠被3整除的整數的和A，<br/>
+(2) 然後計算1000以下所有能夠被5整除的整數和B，<br/>
+(3) 然後再計算1000以下所有能夠被3和5整除的整數和C,<br/>
+(4) 使用A+B-C就得到了最後的結果。</p>
+
+<p>按照上面的方法，傳統的方法當然就是一步一步計算，然後再到第(4)步匯總了。</p>
+
+<p>但是一旦有了Go，我們就可以讓前面三個步驟並行計算，然後再在第(4)步匯總。</p>
+
+<p>並行計算涉及到一個新的<code>數據類型chan</code>和一個新的<code>關鍵字go</code>。</p>
+
+<p>先看例子：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func get_sum_of_divisible(num int, divider int, resultChan chan int) {
+    sum := 0
+    for value := 0; value &lt; num; value++ {
+        if value%divider == 0 {
+            sum += value
+        }
+    }
+    resultChan &lt;- sum
+}
+
+func main() {
+    LIMIT := 1000
+    resultChan := make(chan int, 3)
+    t_start := time.Now()
+    go get_sum_of_divisible(LIMIT, 3, resultChan)
+    go get_sum_of_divisible(LIMIT, 5, resultChan)
+    go get_sum_of_divisible(LIMIT, 15, resultChan)
+
+    sum3, sum5, sum15 := &lt;-resultChan, &lt;-resultChan, &lt;-resultChan
+    sum := sum3 + sum5 - sum15
+    t_end := time.Now()
+    fmt.Println(sum)
+    fmt.Println(t_end.Sub(t_start))
+}
+</code></pre>
+
+<p>(1) 在上面的例子中，我們首先定義了一個普通的函數get_sum_of_divisible，這個函數的<code>最後一個參數是一個整型chan類型</code>，這種類型，你可以把它當作一個先進先出的隊列。你可以<code>向它寫入數據</code>，也可以<code>從它讀出數據</code>。它<code>所能接受的數據類型</code>就是<code>由chan關鍵字後面的類型所決定</code>的。在上面的例子中，我們使用<code>&lt;-</code>運算符將函數計算的結果寫入channel。channel是go提供的用來協程之間通信的方式。本例中main是一個協程，三個get_sum_of_divisible調用是協程。要在這四個協程間通信，必須有一種可靠的手段。</p>
+
+<p>(2) 在main函數中，我們使用go關鍵字來開啟並行計算。並行計算是由goroutine來支持的，<code>goroutine</code>又叫做<code>協程</code>，你可以把它看作為比線程更輕量級的運算。開啟一個協程很簡單，就是<code>go關鍵字</code>後面<code>跟上所要運行的函數</code>。</p>
+
+<p>(3) 最後，我們要從channel中取出並行計算的結果。使用<code>&lt;-</code>運算符從channel裡面取出數據。</p>
+
+<p>在本例中，我們為了演示go並行計算的速度，還引進了time包來計算程序執行時間。在同普通的順序計算相比，並行計算的速度是非同凡響的。</p>
+
+<p>好了，上面的例子看完，我們來詳細講解Go的並行計算。</p>
+
+<p><strong>Goroutine協程</strong></p>
+
+<p>所謂協程，就是Go提供的輕量級的獨立運算過程，比線程還輕。創建一個協程很簡單，就是go關鍵字加上所要運行的函數。看個例子：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func list_elem(n int) {
+    for i := 0; i &lt; n; i++ {
+        fmt.Println(i)
+    }
+}
+func main() {
+    go list_elem(10)
+}
+</code></pre>
+
+<p>上面的例子是創建一個協程遍歷一下元素。但是當你運行的時候，你會<code>發現什麼都沒有輸出</code>！<code>為什麼呢？</code>
+因為上面的<code>main函數</code>在<code>創建完協程後</code>就<code>立刻退出</code>了，所以<code>協程</code>還<code>沒有來得及運行</code>呢！修改一下：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func list_elem(n int) {
+    for i := 0; i &lt; n; i++ {
+        fmt.Println(i)
+    }
+}
+func main() {
+    go list_elem(10)
+    var input string
+    fmt.Scanln(&amp;input)
+}
+</code></pre>
+
+<p>這裡，我們在main函數創建協程後，要求用戶輸入任何數據後才退出，這樣協程就有了運行的時間，故而輸出結果：</p>
+
+<pre><code>0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+</code></pre>
+
+<p>其實在開頭的例子裡面，我們的main函數事實上也被阻塞了，因為<code>sum3, sum5, sum15 := &lt;-resultChan, &lt;-resultChan, &lt;-resultChan</code>這行代碼在channel裡面沒有數據或者數據個數不符的時候，都會阻塞在那裡，直到協程結束，寫入結果。</p>
+
+<p>不過既然是並行計算，我們還是得看看協程是否真的並行計算了。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "math/rand"
+    "time"
+)
+
+func list_elem(n int, tag string) {
+    for i := 0; i &lt; n; i++ {
+        fmt.Println(tag, i)
+        tick := time.Duration(rand.Intn(100))
+        time.Sleep(time.Millisecond * tick)
+    }
+}
+func main() {
+    go list_elem(10, "go_a")
+    go list_elem(20, "go_b")
+    var input string
+    fmt.Scanln(&amp;input)
+}
+</code></pre>
+
+<p>輸出結果</p>
+
+<pre><code>go_a 0
+go_b 0
+go_a 1
+go_b 1
+go_a 2
+go_b 2
+go_b 3
+go_b 4
+go_a 3
+go_b 5
+go_b 6
+go_a 4
+go_a 5
+go_b 7
+go_a 6
+go_a 7
+go_b 8
+go_b 9
+go_a 8
+go_b 10
+go_b 11
+go_a 9
+go_b 12
+go_b 13
+go_b 14
+go_b 15
+go_b 16
+go_b 17
+go_b 18
+go_b 19
+</code></pre>
+
+<p>在上面的例子中，我們讓兩個協程在每輸出一個數字的時候，隨機Sleep了一會兒。如果是並行計算，那麼輸出是無序的。從上面的例子中，我們可以看出兩個協程確實並行運行了。</p>
+
+<p><strong>Channel通道</strong></p>
+
+<p>Channel提供了<code>協程之間</code>的<code>通信方式</code>以及<code>運行同步機制</code>。</p>
+
+<blockquote><p>假設訓練定點投籃和三分投籃，教練在計數。</p></blockquote>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func fixed_shooting(msg_chan chan string) {
+    for {
+        msg_chan &lt;- "fixed shooting"
+        fmt.Println("continue fixed shooting...")
+    }
+}
+
+func count(msg_chan chan string) {
+    for {
+        msg := &lt;-msg_chan
+        fmt.Println(msg)
+        time.Sleep(time.Second * 1)
+    }
+}
+
+func main() {
+    var c chan string
+    c = make(chan string)
+
+    go fixed_shooting(c)
+    go count(c)
+
+    var input string
+    fmt.Scanln(&amp;input)
+}
+</code></pre>
+
+<p>輸出結果為：</p>
+
+<pre><code>fixed shooting
+continue fixed shooting...
+fixed shooting
+continue fixed shooting...
+fixed shooting
+continue fixed shooting...
+</code></pre>
+
+<p>我們看到在fixed_shooting函數裡面我們將消息傳遞到channel，然後輸出提示信息"continue fixed shooting..."，而在count函數裡面，我們從channel裡面取出消息輸出，然後間隔1秒再去取消息輸出。這裡面我們可以考慮一下，如果我們不去從channel中取消息會出現什麼情況？我們把main函數裡面的<code>go count(c)</code>注釋掉，然後再運行一下。發現程序再也不會輸出消息和提示信息了。這是因為channel中根本就沒有信息了，因為<code>如果你要向channel裡面寫信息</code>，<code>必須有配對的取信息的一端</code>，否則是不會寫的。</p>
+
+<p>我們再把三分投籃加上。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func fixed_shooting(msg_chan chan string) {
+    for {
+        msg_chan &lt;- "fixed shooting"
+    }
+}
+
+func three_point_shooting(msg_chan chan string) {
+    for {
+        msg_chan &lt;- "three point shooting"
+    }
+}
+
+func count(msg_chan chan string) {
+    for {
+        msg := &lt;-msg_chan
+        fmt.Println(msg)
+        time.Sleep(time.Second * 1)
+    }
+}
+
+func main() {
+    var c chan string
+    c = make(chan string)
+
+    go fixed_shooting(c)
+    go three_point_shooting(c)
+    go count(c)
+
+    var input string
+    fmt.Scanln(&amp;input)
+}
+</code></pre>
+
+<p>輸出結果為：</p>
+
+<pre><code>fixed shooting
+three point shooting
+fixed shooting
+three point shooting
+fixed shooting
+three point shooting
+</code></pre>
+
+<p>我們看到程序交替輸出定點投籃和三分投籃，這是因為寫入channel的信息必須要讀取出來，否則嘗試再次寫入就失敗了。</p>
+
+<p>在上面的例子中，我們發現<code>定義一個channel信息變量</code>的方式就是多加一個<code>chan</code>關鍵字。並且你能夠<code>向channel寫入數據</code>和<code>從channel讀取數據</code>。這裡我們還可以設置channel通道的方向。</p>
+
+<p><strong>Channel通道方向</strong>*</p>
+
+<p>所謂的<code>通道方向</code>就是<code>寫</code>和<code>讀</code>。如果我們如下定義</p>
+
+<pre><code>c chan&lt;- string //那麼你只能向channel寫入數據
+</code></pre>
+
+<p>而這種定義</p>
+
+<pre><code>c &lt;-chan string //那麼你只能從channel讀取數據
+</code></pre>
+
+<p><code>試圖向只讀chan變量寫入數據或者試圖從只寫chan變量讀取數據都會導致編譯錯誤。</code></p>
+
+<p>如果是默認的定義方式</p>
+
+<pre><code>c chan string //那麼你既可以向channel寫入數據也可以從channnel讀取數據
+</code></pre>
+
+<p><strong>多通道(Select)</strong></p>
+
+<p>如果上面的投籃訓練現在有兩個教練了，各自負責一個訓練項目。而且還在不同的籃球場，這個時候很顯然，我們一個channel就不夠用了。修改一下：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func fixed_shooting(msg_chan chan string) {
+    for {
+        msg_chan &lt;- "fixed shooting"
+        time.Sleep(time.Second * 1)
+    }
+}
+
+func three_point_shooting(msg_chan chan string) {
+    for {
+        msg_chan &lt;- "three point shooting"
+        time.Sleep(time.Second * 1)
+    }
+}
+
+func main() {
+    c_fixed := make(chan string)
+    c_3_point := make(chan string)
+
+    go fixed_shooting(c_fixed)
+    go three_point_shooting(c_3_point)
+
+    go func() {
+        for {
+            select {
+            case msg1 := &lt;-c_fixed:
+                fmt.Println(msg1)
+            case msg2 := &lt;-c_3_point:
+                fmt.Println(msg2)
+            }
+        }
+
+    }()
+
+    var input string
+    fmt.Scanln(&amp;input)
+}
+</code></pre>
+
+<p>其他的和上面的一樣，唯一不同的是我們將定點投籃和三分投籃的消息寫入了不同的channel，那麼main函數如何知道從哪個channel讀取消息呢？使用select方法，select方法依次檢查每個channel是否有消息傳遞過來，如果有就取出來輸出。如果同時有多個消息到達，那麼select閉上眼睛隨機選一個channel來從中讀取消息，如果沒有一個channel有消息到達，那麼select語句就阻塞在這裡一直等待。</p>
+
+<p>在某些情況下，比如學生投籃中受傷了，那麼就輪到醫護人員上場了，教練在一般看看，如果是重傷，教練就不等了，就回去了休息了，待會兒再過來看看情況。我們可以給select加上一個case用來判斷是否等待各個消息到達超時。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func fixed_shooting(msg_chan chan string) {
+    var times = 3
+    var t = 1
+    for {
+        if t &lt;= times {
+            msg_chan &lt;- "fixed shooting"
+        }
+        t++
+        time.Sleep(time.Second * 1)
+    }
+}
+
+func three_point_shooting(msg_chan chan string) {
+    var times = 5
+    var t = 1
+    for {
+        if t &lt;= times {
+            msg_chan &lt;- "three point shooting"
+        }
+        t++
+        time.Sleep(time.Second * 1)
+    }
+}
+
+func main() {
+    c_fixed := make(chan string)
+    c_3_point := make(chan string)
+
+    go fixed_shooting(c_fixed)
+    go three_point_shooting(c_3_point)
+
+    go func() {
+        for {
+            select {
+            case msg1 := &lt;-c_fixed:
+                fmt.Println(msg1)
+            case msg2 := &lt;-c_3_point:
+                fmt.Println(msg2)
+            case &lt;-time.After(time.Second * 5):
+                fmt.Println("timeout, check again...")
+            }
+        }
+
+    }()
+
+    var input string
+    fmt.Scanln(&amp;input)
+}
+</code></pre>
+
+<p>在上面的例子中，我們讓投籃的人在幾次過後掛掉，然後教練就每次等5秒出來看看情況（累死丫的，:-P），因為我們對等待的時間不感興趣就不用變量存儲了，直接<code>&lt;-time.After(time.Second*5)</code>，或許你會奇怪，為什麼各個channel消息都沒有到達，select為什麼不阻塞？就是因為這個time.After，雖然它沒有顯式地告訴你這是一個channel消息，但是記得麼？main函數也是一個channel啊！哈哈！至於time.After的功能實際上讓main阻塞了5秒後返回給main的channel一個時間。所以我們在case裡面把這個時間消息讀出來，select就不阻塞了。</p>
+
+<p>輸出結果如下：</p>
+
+<pre><code>fixed shooting
+three point shooting
+fixed shooting
+three point shooting
+fixed shooting
+three point shooting
+three point shooting
+three point shooting
+timeout, check again...
+timeout, check again...
+timeout, check again...
+timeout, check again...
+</code></pre>
+
+<p>這裡select還有一個<code>default的選項</code>，如果你指定了default選項，那麼當select發現<code>沒有消息到達</code>的時候<code>也不會阻塞</code>，直接開始轉回去再次判斷。</p>
+
+<p><strong>Channel Buffer通道緩沖區</strong></p>
+
+<p>我們定義chan變量的時候，還可以指定它的<code>緩沖區大小</code>。一般我們<code>定義的channel都是同步的</code>，也就是說接受端和發送端彼此等待對方ok才開始。但是如果你給一個channel<code>指定了一個緩沖區</code>，那麼<code>消息的發送和接受是異步的</code>，<code>除非channel緩沖區已經滿了</code>。</p>
+
+<pre><code>c:=make(chan int, 1)
+</code></pre>
+
+<p>我們看個例子：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "strconv"
+    "time"
+)
+
+func shooting(msg_chan chan string) {
+    var group = 1
+    for {
+        for i := 1; i &lt;= 10; i++ {
+            msg_chan &lt;- strconv.Itoa(group) + ":" + strconv.Itoa(i)
+        }
+        group++
+        time.Sleep(time.Second * 10)
+    }
+}
+
+func count(msg_chan chan string) {
+    for {
+        fmt.Println(&lt;-msg_chan)
+    }
+}
+
+func main() {
+    var c = make(chan string, 20)
+    go shooting(c)
+    go count(c)
+
+    var input string
+    fmt.Scanln(&amp;input)
+}
+</code></pre>
+
+<p>輸出結果為：</p>
+
+<pre><code>1:1
+1:2
+1:3
+1:4
+1:5
+1:6
+1:7
+1:8
+1:9
+1:10
+2:1
+2:2
+2:3
+2:4
+2:5
+2:6
+2:7
+2:8
+2:9
+2:10
+3:1
+3:2
+3:3
+3:4
+3:5
+3:6
+3:7
+3:8
+3:9
+3:10
+4:1
+4:2
+4:3
+4:4
+4:5
+4:6
+4:7
+4:8
+4:9
+4:10
+</code></pre>
+
+<p>你可以嘗試運行一下，每次都是一下子輸出10個數據。然後等待10秒再輸出一批。</p>
+
+<p><strong>小結</strong></p>
+
+<p>並行計算這種特點最適合用來開發網站服務器，因為一般網站服務都是高並發的，邏輯十分復雜。而使用Go的這種特性恰是提供了一種極好的方法。</p>
+</body>
+</html>

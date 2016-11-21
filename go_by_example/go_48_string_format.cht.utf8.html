@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 字符串格式化</title>
+</head>
+<body>
+<p>Go對字符串格式化提供了良好的支持。下面我們看些常用的字符串格式化的例子。</p>
+<pre><code>package main
+
+import "fmt"
+import "os"
+
+type point struct {
+    x, y int
+}
+
+func main() {
+
+    // Go提供了幾種打印格式，用來格式化一般的Go值，例如
+    // 下面的%v打印了一個point結構體的對象的值
+    p := point{1, 2}
+    fmt.Printf("%v\n", p)
+
+    // 如果所格式化的值是一個結構體對象，那麼`%+v`的格式化輸出
+    // 將包括結構體的成員名稱和值
+    fmt.Printf("%+v\n", p)
+
+    // `%#v`格式化輸出將輸出一個值的Go語法表示方式。
+    fmt.Printf("%#v\n", p)
+
+    // 使用`%T`來輸出一個值的數據類型
+    fmt.Printf("%T\n", p)
+
+    // 格式化布爾型變量
+    fmt.Printf("%t\n", true)
+
+    // 有很多的方式可以格式化整型，使用`%d`是一種
+    // 標准的以10進制來輸出整型的方式
+    fmt.Printf("%d\n", 123)
+
+    // 這種方式輸出整型的二進制表示方式
+    fmt.Printf("%b\n", 14)
+
+    // 這裡打印出該整型數值所對應的字符
+    fmt.Printf("%c\n", 33)
+
+    // 使用`%x`輸出一個值的16進制表示方式
+    fmt.Printf("%x\n", 456)
+
+    // 浮點型數值也有幾種格式化方法。最基本的一種是`%f`
+    fmt.Printf("%f\n", 78.9)
+
+    // `%e`和`%E`使用科學計數法來輸出整型
+    fmt.Printf("%e\n", 123400000.0)
+    fmt.Printf("%E\n", 123400000.0)
+
+    // 使用`%s`輸出基本的字符串
+    fmt.Printf("%s\n", "\"string\"")
+
+    // 輸出像Go源碼中那樣帶雙引號的字符串，需使用`%q`
+    fmt.Printf("%q\n", "\"string\"")
+
+    // `%x`以16進制輸出字符串，每個字符串的字節用兩個字符輸出
+    fmt.Printf("%x\n", "hex this")
+
+    // 使用`%p`輸出一個指針的值
+    fmt.Printf("%p\n", &amp;p)
+
+    // 當輸出數字的時候，經常需要去控制輸出的寬度和精度。
+    // 可以使用一個位於%後面的數字來控制輸出的寬度，默認
+    // 情況下輸出是右對齊的，左邊加上空格
+    fmt.Printf("|%6d|%6d|\n", 12, 345)
+
+    // 你也可以指定浮點數的輸出寬度，同時你還可以指定浮點數
+    // 的輸出精度
+    fmt.Printf("|%6.2f|%6.2f|\n", 1.2, 3.45)
+
+    // To left-justify, use the `-` flag.
+    fmt.Printf("|%-6.2f|%-6.2f|\n", 1.2, 3.45)
+
+    // 你也可以指定輸出字符串的寬度來保證它們輸出對齊。默認
+    // 情況下，輸出是右對齊的
+    fmt.Printf("|%6s|%6s|\n", "foo", "b")
+
+    // 為了使用左對齊你可以在寬度之前加上`-`號
+    fmt.Printf("|%-6s|%-6s|\n", "foo", "b")
+
+    // `Printf`函數的輸出是輸出到命令行`os.Stdout`的，你
+    // 可以用`Sprintf`來將格式化後的字符串賦值給一個變量
+    s := fmt.Sprintf("a %s", "string")
+    fmt.Println(s)
+
+    // 你也可以使用`Fprintf`來將格式化後的值輸出到`io.Writers`
+    fmt.Fprintf(os.Stderr, "an %s\n", "error")
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>{1 2}
+{x:1 y:2}
+main.point{x:1, y:2}
+main.point
+true
+123
+1110
+!
+1c8
+78.900000
+1.234000e+08
+1.234000E+08
+"string"
+"\"string\""
+6865782074686973
+0x103a10c0
+|    12|   345|
+|  1.20|  3.45|
+|1.20  |3.45  |
+|   foo|     b|
+|foo   |b     |
+a string
+an error
+</code></pre></body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 信號處理</title>
+</head>
+<body>
+<p>有的時候我們希望Go能夠智能地處理Unix信號。例如我們希望一個server接收到一個SIGTERM的信號時，能夠自動地停止；或者一個命令行工具接收到一個SIGINT信號時，能夠停止接收輸入。現在我們來看下如何使用channel來處理信號。</p>
+<pre><code>package main
+
+import "fmt"
+import "os"
+import "os/signal"
+import "syscall"
+
+func main() {
+
+    // Go信號通知通過向一個channel發送``os.Signal`來實現。
+    // 我們將創建一個channel來接受這些通知，同時我們還用
+    // 一個channel來在程序可以退出的時候通知我們
+    sigs := make(chan os.Signal, 1)
+    done := make(chan bool, 1)
+
+    // `signal.Notify`在給定的channel上面注冊該channel
+    // 可以接受的信號
+    signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+    // 這個goroutine阻塞等待信號的到來，當信號到來的時候，
+    // 輸出該信號，然後通知程序可以結束了
+    go func() {
+        sig := &lt;-sigs
+        fmt.Println()
+        fmt.Println(sig)
+        done &lt;- true
+    }()
+
+    // 程序將等待接受信號，然後退出
+    fmt.Println("awaiting signal")
+    &lt;-done
+    fmt.Println("exiting")
+}
+</code></pre>
+<p>當運行程序的時候，程序將阻塞等待信號的到來，我們可以使用<code>CTRL+C</code>來發送一個<code>SIGINT</code>信號，這樣程序就會輸出interrupt後退出。</p>
+<pre><code>awaiting signal
+
+interrupt
+exiting
+</code></pre></body>
+</html>

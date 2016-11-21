@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go語言環境安裝與測試</title>
+
+</head>
+<body>
+<h2>安裝</h2>
+
+<p>首先來談談Go語言的安裝，要使用Go來編寫程序首先得把環境搭建起來。
+Go的語言環境搭建還是比較簡單的。Google提供了Windows和Mac的安裝包，所以去下載一下安裝就可以了。
+對於Linux的系統，可以使用系統提供的包安裝工具來安裝。</p>
+
+<p><strong>Go的下載地址</strong></p>
+
+<p><a href="https://code.google.com/p/go/downloads/list">https://code.google.com/p/go/downloads/list</a></p>
+
+<p><strong>Windows</strong></p>
+
+<p>對於Windows系統，Go提供了兩種不同的安裝包，分別對應32位的系統和64位的系統，安裝的時候根據自己的系統實際情況選擇下載包。Windows下面提供的是msi格式的安裝包，這種包是可執行文件，直接雙擊安裝就可以了。安裝完成之後，安裝程序會自動地將安裝完的Go的根目錄下的bin目錄加入系統的PATH環境變量裡面。所以直接打開命令行，輸入go，就可以看到一些提示信息了。</p>
+
+<p><strong>Mac</strong></p>
+
+<p>如果是新買的Mac，裡面可能自帶了一個go的可執行文件，在路徑<code>/etc/paths.d/</code>下面，就是一個go可執行文件。如果我們需要安裝從官網下載的dmg安裝包，先要把這個文件刪除掉。可以用<code>sudo rm /etc/paths.d/go</code>來刪除。然後自動安裝dmg之後，要使用<code>export PATH</code>的方法將安裝好的Go目錄下面的bin目錄加入PATH中。一般安裝完之後路徑為<code>/usr/local/go</code>，所以你可以用下面的方法：
+首先切換到自己的用戶目錄</p>
+
+<pre><code>cd ~
+</code></pre>
+
+<p>然後</p>
+
+<pre><code>vim .profile
+</code></pre>
+
+<p>加入一行</p>
+
+<pre><code>export PATH=/usr/local/go/bin:$PATH
+</code></pre>
+
+<p>就可以了。</p>
+
+<p><strong>Linux</strong></p>
+
+<p>Linux的發行版有很多，可以根據不同系統提供的包管理工具來安裝Go，不過可能系統包管理工具提供的不是最新的Go版本。在這種情況下，你可以去下載最新的tar包。
+然後使用下面的方法</p>
+
+<pre><code>sudo tar -C /usr/local -xzf go1.2.linux-386.tar.gz
+</code></pre>
+
+<p>如果是64位的系統，用下面的方法</p>
+
+<pre><code>sudo tar -C /usr/local -xzf go1.2.linux-amd64.tar.gz
+</code></pre>
+
+<p>當然，這樣的方式只是將安裝包解壓拷貝到<code>/usr/local/</code>下面。你還需要使用<code>export PATH</code>的方式將Go的bin目錄加入PATH。
+方法和上面Mac介紹的一樣。
+另外如果你不是將Go安裝到<code>/usr/local</code>目錄下面，你還需要設置一個GOROOT環境變量。比如你安裝到你自己的文件夾下面，比如叫jemy的用戶的路徑是<code>/home/jemy</code>，那麼你安裝到這個目錄的Go路徑為<code>/home/jemy/go</code>，那麼在<code>export PATH</code>之前，你還需要使用下面的命令。</p>
+
+<pre><code>export GOROOT=/home/jemy/go
+</code></pre>
+
+<p>總結一下，如果你默認安裝路徑為<code>/usr/local/go</code>，那麼只需要用</p>
+
+<pre><code>export PATH=$PATH:/usr/local/go/bin
+</code></pre>
+
+<p>就可以了。
+如果不是默認路徑則需要這樣</p>
+
+<pre><code>export GOROOT=/home/jemy/go
+export PATH=$PATH:/$GROOT/bin
+</code></pre>
+
+<p>上面的<code>/home/jemy</code>是根據實際安裝的路徑情況來確定。</p>
+
+<p>最後說一下go的最基本的三個命令</p>
+
+<p>1.查看版本號</p>
+
+<pre><code>go version 
+</code></pre>
+
+<p>結果為</p>
+
+<pre><code>duokr:~ jemy$ go version
+go version go1.2 darwin/386
+</code></pre>
+
+<p>2.格式化go代碼文件</p>
+
+<pre><code>go fmt file_name.go
+</code></pre>
+
+<p>3.運行單個go代碼文件</p>
+
+<pre><code>go run file_name.go
+</code></pre>
+
+<h2>測試</h2>
+
+<p><code>生</code> <code>死</code> <code>hello world</code></p>
+
+<p>學習計算機的， 繞不開的三件事。</p>
+
+<p>有誰安裝好語言環境，不試一下hello world的？</p>
+
+<pre><code>//main包, 凡是標注為main包的go文件都會被編譯為可執行文件
+package main
+
+//導入需要使用的包
+import (
+    "fmt" //支持格式化輸出的包,就是format的簡寫
+)
+
+//主函數,程序執行入口
+func main() {
+    /*
+        輸出一行hello world
+        Println函數就是print line的意思
+    */
+    fmt.Println("hello world")
+}
+</code></pre>
+
+<p>然後使用<code>go run helloworld.go</code>來運行這個例子。如果安裝成功，那麼會輸出一行<code>hello world</code>。</p>
+
+<p><em>PS</em></p>
+
+<p><code>Windows7可以在文件所在目錄下面使用Shift+右鍵，快速打開已定位到所在目錄的命令行窗口。直接輸入上面命令即可。</code></p>
+</body>
+</html>

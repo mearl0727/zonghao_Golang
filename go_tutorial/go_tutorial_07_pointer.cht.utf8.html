@@ -1,0 +1,216 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go指針</title>
+
+</head>
+<body>
+<p>不要害怕，Go的指針是好指針。</p>
+
+<p><strong>定義</strong></p>
+
+<p>所謂<code>指針其實你可以把它想像成一個箭頭，這個箭頭指向（存儲）一個變量的地址</code>。</p>
+
+<p>因為這個箭頭本身也需要變量來存儲，所以也叫做指針變量。</p>
+
+<p>Go的指針<code>不支持那些亂七八糟的指針移位</code>。<code>它就表示一個變量的地址</code>。看看這個例子：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var x int
+    var x_ptr *int
+
+    x = 10
+    x_ptr = &amp;x
+
+    fmt.Println(x)
+    fmt.Println(x_ptr)
+    fmt.Println(*x_ptr)
+}
+</code></pre>
+
+<p>上面例子輸出<code>x的值</code>，<code>x的地址</code>和<code>通過指針變量輸出x的值</code>，而<code>x_ptr就是一個指針變量</code>。</p>
+
+<pre><code>10
+0xc084000038
+10
+</code></pre>
+
+<p>認真理清楚這兩個符號的意思。</p>
+
+<p><strong>&amp;</strong> <code>取一個變量的地址</code></p>
+
+<p><strong>*</strong> <code>取一個指針變量所指向的地址的值</code></p>
+
+<p>考你一下，上面的例子中，如何輸出x_ptr的地址呢？</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var x int
+    var x_ptr *int
+
+    x = 10
+    x_ptr = &amp;x
+
+    fmt.Println(&amp;x_ptr)
+}
+</code></pre>
+
+<p>此例看懂，指針就懂了。</p>
+
+<p>永遠記住一句話，<code>所謂指針就是一個指向（存儲）特定變量地址的變量</code>。沒有其他的特別之處。</p>
+
+<p>再變態一下，看看這個：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var x int
+    var x_ptr *int
+
+    x = 10
+    x_ptr = &amp;x
+
+    fmt.Println(*&amp;x_ptr)
+}
+</code></pre>
+
+<ol>
+<li>x_ptr 是一個<code>指針變量</code>，它<code>指向(存儲)x的地址</code>；</li>
+<li>&amp;x_ptr 是<code>取這個指針變量x_ptr的地址</code>，這裡可以設想<code>有另一個指針變量x_ptr_ptr(指向)存儲</code>這個<code>x_ptr指針的地址</code>；</li>
+<li>*&amp;x_ptr 等價於<code>*x_ptr_ptr</code>就是<code>取這個x_ptr_ptr指針變量</code>所<code>指向(存儲)</code>的<code>地址所對應的變量的值</code> ，也就是<code>x_ptr的值</code>，也就是<code>指針變量x_ptr指向(存儲)的地址</code>，也就是<code>x的地址</code>。 這裡可以看到，其實<code>*&amp;</code>這兩個運算符在一起就相互抵消作用了。</li>
+</ol>
+
+
+<p><strong>用途</strong></p>
+
+<p><code>指針的一大用途就是可以將變量的指針作為實參傳遞給函數，從而在函數內部能夠直接修改實參所指向的變量值。</code></p>
+
+<p>Go的變量傳遞都是值傳遞。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func change(x int) {
+    x = 200
+}
+func main() {
+    var x int = 100
+    fmt.Println(x)
+    change(x)
+    fmt.Println(x)
+}
+</code></pre>
+
+<p>上面的例子輸出結果為</p>
+
+<pre><code>100
+100
+</code></pre>
+
+<p>很顯然，change函數<code>改變的</code>僅僅是<code>內部變量x</code>的<code>值</code>，而<code>不會改變</code>傳遞進去的<code>實參</code>。其實，也就是說Go的函數一般關心的是輸出結果，而輸入參數就相當於信使跑到函數門口大叫，你們這個參數是什麼值，那個是什麼值，然後就跑了。你函數根本就不能修改它的值。不過如果是傳遞的實參是指針變量，那麼函數一看，小子這次你地址我都知道了，哪裡跑。那麼就是下面的例子：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func change(x *int) {
+    *x = 200
+}
+func main() {
+    var x int = 100
+    fmt.Println(x)
+    change(&amp;x)
+    fmt.Println(x)
+}
+</code></pre>
+
+<p>上面的例子中，change函數的虛參為<code>整型指針變量</code>，所以在main中調用的時候<code>傳遞的是x的地址</code>。然後在change裡面使用<code>*x=200</code>修改了這個x的地址的值。所以<code>x的值就變了</code>。這個輸出是：</p>
+
+<pre><code>100
+200
+</code></pre>
+
+<p><strong>new</strong></p>
+
+<p>new這個函數挺神奇，因為它的用處太多了。這裡還可以通過new來<code>初始化一個指針</code>。上面說過指針指向(存儲)的是一個變量的地址，但是指針本身也需要地址存儲。先看個例子：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func set_value(x_ptr *int) {
+    *x_ptr = 100
+}
+func main() {
+    x_ptr := new(int)
+    set_value(x_ptr)
+    //x_ptr指向的地址
+    fmt.Println(x_ptr)
+    //x_ptr本身的地址
+    fmt.Println(&amp;x_ptr)
+    //x_ptr指向的地址值
+    fmt.Println(*x_ptr)
+}
+</code></pre>
+
+<p>上面我們定義了一個x_ptr變量，然後用<code>new申請</code>了一個<code>存儲整型數據的內存地址</code>，然後將這個<code>地址賦值</code>給<code>x_ptr指針變量</code>，也就是說<code>x_ptr指向（存儲）的是一個可以存儲整型數據的地址</code>，然後用set_value函數將<code>這個地址中存儲的值</code>賦值為100。所以第一個輸出是<code>x_ptr指向的地址</code>，第二個則是<code>x_ptr本身的地址</code>，而<code>*x_ptr</code>則是<code>x_ptr指向的地址中存儲的整型數據的值</code>。</p>
+
+<pre><code>0xc084000040
+0xc084000038
+100
+</code></pre>
+
+<p><strong>小結</strong></p>
+
+<p>好了，現在用個例子再來回顧一下指針。</p>
+
+<p>交換兩個變量的值。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func swap(x, y *int) {
+    *x, *y = *y, *x
+}
+func main() {
+    x_val := 100
+    y_val := 200
+    swap(&amp;x_val, &amp;y_val)
+    fmt.Println(x_val)
+    fmt.Println(y_val)
+}
+</code></pre>
+
+<p>很簡單吧，這裡利用了Go提供的<code>交叉賦值</code>的功能，另外由於是使用了指針作為參數，所以在swap函數內，x_val和y_val的值就被交換了。</p>
+</body>
+</html>

@@ -1,0 +1,549 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>數組，切片和字典</title>
+
+</head>
+<body>
+<p>在上面的章節裡面，我們講過Go內置的基本數據類型。現在我們來看一下Go內置的高級數據類型，數組，切片和字典。</p>
+
+<p><strong>數組(Array)</strong></p>
+
+<p>數組是一個具有<code>相同數據類型</code>的元素組成的<code>固定長度</code>的<code>有序集合</code>。比如下面的例子</p>
+
+<pre><code>var x [5]int
+</code></pre>
+
+<p>表示數組x是一個整型數組，而且數值的長度為5。</p>
+
+<p><code>Go提供了幾種不同的數組定義方法。</code></p>
+
+<p><code>最基本的方式就是使用var關鍵字來定義，然後依次給元素賦值</code>。<code>對於沒有賦值的元素，默認為零值</code>。比如對於整數，零值就是0，浮點數，零值就是0.0，字符串，零值就是""，對象零值就是nil。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var x [5]int
+    x[0] = 2
+    x[1] = 3
+    x[2] = 3
+    x[3] = 2
+    x[4] = 12
+    var sum int
+    for _, elem := range x {
+        sum += elem
+    }
+    fmt.Println(sum)
+}
+</code></pre>
+
+<p>在上面的例子中，我們首先使用<code>var</code>關鍵字來聲明，然後給出數組名稱<code>x</code>，最後說明數組為整型數組，長度為5。然後我們使用索引方式給數組元素賦值。在上面的例子中，我們還使用了一種遍歷數組元素的方法。該方法利用Go語言提供的內置函數range來遍歷數組元素。<code>range函數可以用在數組，切片和字典上面</code>。當<code>range來遍歷數組的時候返回數組的索引和元素值</code>。在這裡我們是對數組元素求和，所以我們對索引不感興趣。在Go語言裡面，<code>當你對一個函數返回值不感興趣的話，可以使用下劃線(_)來替代它</code>。另外這裡如果我們真的定義了一個索引，在循環結構裡面卻沒有使用索引，Go語言編譯的時候還是會報錯的。所以用下劃線來替代索引變量也是唯一之舉了。最後我們輸出數組元素的和。</p>
+
+<p>還有一種方式，如果知道了數組的初始值。可以像下面這樣定義。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var x = [5]int{1, 2, 3, 4}
+    x[4] = 5
+
+    var sum int
+    for _, i := range x {
+        sum += i
+    }
+    fmt.Println(sum)
+}
+</code></pre>
+
+<p>當然，即使你不知道數組元素的初始值，也可以使用這樣的定義方式。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var x = [5]int{}
+    x[0] = 1
+    x[1] = 2
+    x[2] = 3
+    x[3] = 4
+    x[4] = 5
+
+    var sum int
+    for _, i := range x {
+        sum += i
+    }
+    fmt.Println(sum)
+}
+</code></pre>
+
+<p><code>在這裡我們需要特別重視數組的一個特點，就是數組是有固定長度的。</code></p>
+
+<p>但是如果我們有的時候也可以不顯式指定數組的長度，而是使用<code>...</code>來替代數組長度，Go語言會自動計算出數組的長度。不過這種方式定義的數組一定是有初始化的值的。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var x = [...]string{
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"}
+
+    for _, day := range x {
+        fmt.Println(day)
+    }
+}
+</code></pre>
+
+<p>在上面的例子中，還需要注意一點就是如果將數組元素定義在不同行上面，那麼最後一個元素後面必須跟上<code>}</code>或者<code>,</code>。上面的例子也可以是這樣的。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var x = [...]string{
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    }
+
+    for _, day := range x {
+        fmt.Println(day)
+    }
+}
+</code></pre>
+
+<p><code>Go提供的這種可以自動計算數組長度的方法在調試程序的時候特別方便，假設我們注釋掉上面數組x的最後一個元素，我們甚至不需要去修改數組的長度。</code></p>
+
+<p><strong>切片(Slice)</strong></p>
+
+<p>在上面我們說過數組是有固定長度的有序集合。這也就是說一旦數組長度定義，你將無法在數組裡面多添加哪怕一個元素。數組的這種特點有的時候會成為很大的缺點，尤其是當數組的元素個數不確定的情況下。</p>
+
+<p>所以<code>切片</code>誕生了。</p>
+
+<p>切片和數組很類似，甚至你可以理解成數組的子集。但是<code>切片有一個數組所沒有的特點，那就是切片的長度是可變的</code>。</p>
+
+<p>嚴格地講，切片有<code>容量(capacity)</code>和<code>長度(length)</code>兩個屬性。</p>
+
+<p>首先我們來看一下切片的定義。切片有兩種定義方式，一種是先聲明一個變量是切片，然後使用內置函數make去初始化這個切片。另外一種是通過取數組切片來賦值。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var x = make([]float64, 5)
+    fmt.Println("Capcity:", cap(x), "Length:", len(x))
+    var y = make([]float64, 5, 10)
+    fmt.Println("Capcity:", cap(y), "Length:", len(y))
+
+    for i := 0; i &lt; len(x); i++ {
+        x[i] = float64(i)
+    }
+    fmt.Println(x)
+
+    for i := 0; i &lt; len(y); i++ {
+        y[i] = float64(i)
+    }
+    fmt.Println(y)
+}
+</code></pre>
+
+<p>輸出結果為</p>
+
+<pre><code>Capcity: 5 Length: 5
+Capcity: 10 Length: 5
+[0 1 2 3 4]
+[0 1 2 3 4]
+</code></pre>
+
+<p>上面我們首先用make函數定義切片x，這個時候x的容量是5，長度也是5。然後使用make函數定義了切片y，這個時候y的容量是10，長度是5。然後我們再分別為切片x和y的元素賦值，最後輸出。</p>
+
+<p>所以使用make函數定義切片的時候，有<code>兩種方式</code>，一種<code>只指定長度，這個時候切片的長度和容量是相同的</code>。另外一種是<code>同時指定切片長度和容量</code>。雖然切片的容量可以大於長度，但是<code>賦值的時候要注意最大的索引仍然是len(x)－1</code>。否則會報索引超出邊界錯誤。</p>
+
+<p>另外一種是通過數組切片賦值，采用<code>[low_index:high_index]</code>的方式獲取數值切片，其中切片元素<code>包括low_index的元素</code>，但是<code>不包括high_index的元素</code>。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var arr1 = [5]int{1, 2, 3, 4, 5}
+    var s1 = arr1[2:3]
+    var s2 = arr1[:3]
+    var s3 = arr1[2:]
+    var s4 = arr1[:]
+    fmt.Println(s1)
+    fmt.Println(s2)
+    fmt.Println(s3)
+    fmt.Println(s4)
+}
+</code></pre>
+
+<p>輸出結果為</p>
+
+<pre><code>[3]
+[1 2 3]
+[3 4 5]
+[1 2 3 4 5]
+</code></pre>
+
+<p>在上面的例子中，我們還省略了low_index或high_index。如果省略了low_index，那麼等價於從索引0開始；如果省略了high_index，則默認high_index等於len(arr1)，即切片長度。</p>
+
+<p>這裡為了體現切片的長度可以變化，我們看一下下面的例子：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var arr1 = make([]int, 5, 10)
+    for i := 0; i &lt; len(arr1); i++ {
+        arr1[i] = i
+    }
+    fmt.Println(arr1)
+
+    arr1 = append(arr1, 5, 6, 7, 8)
+    fmt.Println("Capacity:", cap(arr1), "Length:", len(arr1))
+    fmt.Println(arr1)
+}
+</code></pre>
+
+<p>輸出結果為</p>
+
+<pre><code>[0 1 2 3 4]
+Capacity: 10 Length: 9
+[0 1 2 3 4 5 6 7 8]
+</code></pre>
+
+<p>這裡我們初始化arr1為容量10，長度為5的切片，然後為前面的5個元素賦值。然後輸出結果。然後我們再使用Go內置方法append來為arr1追加四個元素，這個時候再看一下arr1的容量和長度以及切片元素，我們發現切片的長度確實變了。</p>
+
+<p>另外我們再用<code>append</code>方法給arr1多追加幾個元素，試圖超過arr1原來定義的容量大小。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var arr1 = make([]int, 5, 10)
+    for i := 0; i &lt; len(arr1); i++ {
+        arr1[i] = i
+    }
+
+    arr1 = append(arr1, 5, 6, 7, 8, 9, 10)
+    fmt.Println("Capacity:", cap(arr1), "Length:", len(arr1))
+    fmt.Println(arr1)
+}
+</code></pre>
+
+<p>輸出結果為</p>
+
+<pre><code>Capacity: 20 Length: 11
+[0 1 2 3 4 5 6 7 8 9 10]
+</code></pre>
+
+<p>我們發現arr1的長度變為11，因為元素個數現在為11個。另外我們發現arr1的容量也變了，變為原來的兩倍。這是因為<code>Go在默認的情況下，如果追加的元素超過了容量大小，Go會自動地重新為切片分配容量，容量大小為原來的兩倍</code>。</p>
+
+<p>上面我們介紹了，可以<code>使用append函數給切片增加元素</code>，現在我們再來介紹一個<code>copy函數用來從一個切片拷貝元素到另一個切片</code>。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    slice1 := []int{1, 2, 3, 4, 5, 6}
+    slice2 := make([]int, 5, 10)
+    copy(slice2, slice1)
+    fmt.Println(slice1)
+    fmt.Println(slice2)
+}
+</code></pre>
+
+<p>輸出結果</p>
+
+<pre><code>[1 2 3 4 5 6]
+[1 2 3 4 5]
+</code></pre>
+
+<p>在上面的例子中，我們將slice1的元素拷貝到slice2，因為slice2的長度為5，所以最多拷貝5個元素。</p>
+
+<p>總結一下，數組和切片的區別就在於<code>[]</code>裡面是否有數字或者<code>...</code>。因為數值長度是固定的，而切片是可變的。</p>
+
+<p><strong>字典(Map)</strong></p>
+
+<p>字典是一組<code>無序的</code>，<code>鍵值對</code>的<code>集合</code>。</p>
+
+<p>字典也叫做<code>關聯數組</code>，因為數組通過<code>索引</code>來查找元素，而字典通過<code>鍵</code>來查找元素。當然，很顯然的，字典的鍵是不能重復的。如果試圖賦值給同一個鍵，後賦值的值將覆蓋前面賦值的值。</p>
+
+<p>字典的定義也有兩種，一種是<code>初始化數據</code>的定義方式，另一種是<code>使用神奇的make函數</code>來定義。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var x = map[string]string{
+        "A": "Apple",
+        "B": "Banana",
+        "O": "Orange",
+        "P": "Pear",
+    }
+
+    for key, val := range x {
+        fmt.Println("Key:", key, "Value:", val)
+    }
+}
+</code></pre>
+
+<p>輸出結果為</p>
+
+<pre><code>Key: A Value: Apple
+Key: B Value: Banana
+Key: O Value: Orange
+Key: P Value: Pear
+</code></pre>
+
+<p>在上面的例子中，我們定義了一個string:string的字典，其中<code>[]</code>之間的是鍵類型，右邊的是值類型。另外我們還看到了<code>range函數，此函數一樣神奇，可以用來迭代字典元素，返回key:value鍵值對</code>。當然如果你對鍵或者值不感興趣，一樣可以使用<code>下劃線(_)</code>來忽略返回值。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var x map[string]string
+
+    x = make(map[string]string)
+
+    x["A"] = "Apple"
+    x["B"] = "Banana"
+    x["O"] = "Orange"
+    x["P"] = "Pear"
+
+    for key, val := range x {
+        fmt.Println("Key:", key, "Value:", val)
+    }
+}
+</code></pre>
+
+<p>上面的方式就是使用了make函數來初始化字典，<code>試圖為未經過初始化的字典添加元素會導致運行錯誤</code>，你可以把使用make函數初始化的那一行注釋掉，然後看一下。</p>
+
+<p>當然上面的例子中，我們可以把定義和初始化合成一句。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    x := make(map[string]string)
+
+    x["A"] = "Apple"
+    x["B"] = "Banana"
+    x["O"] = "Orange"
+    x["P"] = "Pear"
+
+    for key, val := range x {
+        fmt.Println("Key:", key, "Value:", val)
+    }
+}
+</code></pre>
+
+<p>現在我們再來看一下字典的數據訪問方式。如果你訪問的元素所對應的鍵存在於字典中，那麼沒有問題，如果不存在呢？</p>
+
+<p>這個時候會返回零值。對於字符串零值就是""，對於整數零值就是0。但是對於下面的例子：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    x := make(map[string]int)
+
+    x["A"] = 0
+    x["B"] = 20
+    x["O"] = 30
+    x["P"] = 40
+
+    fmt.Println(x["C"])
+}
+</code></pre>
+
+<p>在這個例子中，很顯然不存在鍵C，但是程序的輸出結果為0，這樣就和鍵A對應的值混淆了。</p>
+
+<p>Go提供了一種方法來解決這個問題：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    x := make(map[string]int)
+
+    x["A"] = 0
+    x["B"] = 20
+    x["O"] = 30
+    x["P"] = 40
+
+    if val, ok := x["C"]; ok {
+        fmt.Println(val)
+    }
+}
+</code></pre>
+
+<p>上面的例子中，我們可以看到事實上使用<code>x["C"]</code>的返回值有兩個，一個是值，另一個是是否存在此鍵的bool型變量，所以我們看到ok為true的時候就輸出鍵C的值，如果ok為false，那就是字典中不存在這個鍵。</p>
+
+<p>現在我們再來看看<code>Go提供的內置函數delete，這個函數可以用來從字典中刪除元素</code>。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    x := make(map[string]int)
+
+    x["A"] = 10
+    x["B"] = 20
+    x["C"] = 30
+    x["D"] = 40
+
+    fmt.Println("Before Delete")
+    fmt.Println("Length:", len(x))
+    fmt.Println(x)
+
+    delete(x, "A")
+
+    fmt.Println("After Delete")
+    fmt.Println("Length:", len(x))
+    fmt.Println(x)
+}
+</code></pre>
+
+<p>輸出結果為</p>
+
+<pre><code>Before Delete
+Length: 4
+map[A:10 B:20 C:30 D:40]
+After Delete
+Length: 3
+map[B:20 C:30 D:40]
+</code></pre>
+
+<p>我們在刪除元素前查看一下字典長度和元素，刪除之後再看一下。這裡面我們還可以看到<code>len函數也可以用來獲取字典的元素個數</code>。當然如果你試圖刪除一個不存在的鍵，那麼程序也不會報錯，只是不會對字典造成任何影響。</p>
+
+<p>最後我們再用一個稍微復雜的例子來結束字典的介紹。</p>
+
+<p>我們有一個學生登記表，登記表裡面有一組學號，每個學號對應一個學生，每個學生有名字和年齡。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var facebook = make(map[string]map[string]int)
+    facebook["0616020432"] = map[string]int{"Jemy": 25}
+    facebook["0616020433"] = map[string]int{"Andy": 23}
+    facebook["0616020434"] = map[string]int{"Bill": 22}
+
+    for stu_no, stu_info := range facebook {
+        fmt.Println("Student:", stu_no)
+        for name, age := range stu_info {
+            fmt.Println("Name:", name, "Age:", age)
+        }
+        fmt.Println()
+    }
+}
+</code></pre>
+
+<p>輸出結果為</p>
+
+<pre><code>Student: 0616020432
+Name Jemy Age 25
+
+Student: 0616020433
+Name Andy Age 23
+
+Student: 0616020434
+Name Bill Age 22
+</code></pre>
+
+<p>當然我們也可以用初始化的方式定義字典：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var facebook = map[string]map[string]int{
+        "0616020432": {"Jemy": 25},
+        "0616020433": {"Andy": 23},
+        "0616020434": {"Bill": 22},
+    }
+
+    for stu_no, stu_info := range facebook {
+        fmt.Println("Student:", stu_no)
+        for name, age := range stu_info {
+            fmt.Println("Name:", name, "Age:", age)
+        }
+        fmt.Println()
+    }
+}
+</code></pre>
+
+<p>輸出結果是一樣的。</p>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go if..else if..else 條件判斷</title>
+</head>
+<body>
+<p>Go語言的條件判斷結構也很簡單。</p>
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+
+    // 基本的例子
+    if 7%2 == 0 {
+        fmt.Println("7 is even")
+    } else {
+        fmt.Println("7 is odd")
+    }
+
+    // 只有if條件的情況
+    if 8%4 == 0 {
+        fmt.Println("8 is divisible by 4")
+    }
+
+    // if條件可以包含一個初始化表達式，這個表達式中的變量
+    // 是這個條件判斷結構的局部變量
+    if num := 9; num &lt; 0 {
+        fmt.Println(num, "is negative")
+    } else if num &lt; 10 {
+        fmt.Println(num, "has 1 digit")
+    } else {
+        fmt.Println(num, "has multiple digits")
+    }
+}
+</code></pre>
+<p>條件判斷結構中，條件兩邊的小括號()是可以省略的，但是條件執行語句塊兩邊的大括號{}不可以。</p>
+<p>輸出結果為</p>
+<pre><code>7 is odd
+8 is divisible by 4
+9 has 1 digit
+</code></pre>
+<p>在Go裡面沒有三元表達式"?:"，所以你只能使用條件判斷語句。</p></body>
+</html>

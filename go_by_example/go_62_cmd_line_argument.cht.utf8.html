@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 命令行參數</title>
+</head>
+<body>
+<p>命令行參數是一種指定程序運行初始參數的常用方式。比如<code>go run hello.go</code>使用<code>run</code>和<code>hello.go</code>參數來執行程序。</p>
+<pre><code>package main
+
+import "os"
+import "fmt"
+
+func main() {
+
+    // `os.Args`提供了對命令行參數的訪問，注意該
+    // 切片的第一個元素是該程序的運行路徑，而
+    // `os.Args[1:]`則包含了該程序的所有參數
+    argsWithProg := os.Args
+    argsWithoutProg := os.Args[1:]
+
+    // 你可以使用索引的方式來獲取單個參數
+    arg := os.Args[3]
+
+    fmt.Println(argsWithProg)
+    fmt.Println(argsWithoutProg)
+    fmt.Println(arg)
+}
+</code></pre>
+<p>在運行該程序的時候，需要首先用<code>go build</code>將代碼編譯為可執行文件，然後提供足夠數量的參數。例如</p>
+<pre><code>$ go build command-line-arguments.go
+$ ./command-line-arguments a b c d
+[./command-line-arguments a b c d]       
+[a b c d]
+c
+</code></pre></body>
+</html>

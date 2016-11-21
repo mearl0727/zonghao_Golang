@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 寫入文件</title>
+</head>
+<body>
+<p>Go將數據寫入文件的方法和上面介紹過的讀取文件的方法很類似。</p>
+<pre><code>package main
+
+import (
+    "bufio"
+    "fmt"
+    "io/ioutil"
+    "os"
+)
+
+func check(e error) {
+    if e != nil {
+        panic(e)
+    }
+}
+
+func main() {
+
+    // 首先看一下如何將一個字符串寫入文件
+    d1 := []byte("hello\ngo\n")
+    err := ioutil.WriteFile("/tmp/dat1", d1, 0644)
+    check(err)
+
+    // 為了實現細顆粒度的寫入，打開文件後再寫入
+    f, err := os.Create("/tmp/dat2")
+    check(err)
+
+    // 在打開文件後通常應該立刻使用defer來調用
+    // 打開文件的Close方法，以保證main函數結束
+    // 後，文件關閉
+    defer f.Close()
+
+    // 你可以寫入字節切片
+    d2 := []byte{115, 111, 109, 101, 10}
+    n2, err := f.Write(d2)
+    check(err)
+    fmt.Printf("wrote %d bytes\n", n2)
+
+    // 也可以使用`WriteString`直接寫入字符串
+    n3, err := f.WriteString("writes\n")
+    fmt.Printf("wrote %d bytes\n", n3)
+
+    // 調用Sync方法來將緩沖區數據寫入磁盤
+    f.Sync()
+
+    // `bufio`除了提供上面的緩沖讀取數據外，還
+    // 提供了緩沖寫入數據的方法
+    w := bufio.NewWriter(f)
+    n4, err := w.WriteString("buffered\n")
+    fmt.Printf("wrote %d bytes\n", n4)
+
+    // 使用Flush方法確保所有緩沖區的數據寫入底層writer
+    w.Flush()
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>wrote 5 bytes
+wrote 7 bytes
+wrote 9 bytes
+</code></pre></body>
+</html>

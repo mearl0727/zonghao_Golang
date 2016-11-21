@@ -1,0 +1,241 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go語言內置基礎數據類型</title>
+
+</head>
+<body>
+<p>在自然界裡面，有貓，有狗，有豬。有各種動物。每種動物都是不同的。<br/>
+比如貓會喵喵叫，狗會旺旺叫，豬會哼哼叫。。。<br/>
+Stop!!!<br/>
+好了，大家畢竟不是幼兒園的小朋友。介紹到這裡就可以了。</p>
+
+<p>論點就是每個東西都有自己歸屬的類別(Type)。<br/>
+那麼在Go語言裡面，每個變量也都是有類別的，這種類別叫做<code>數據類型(Data Type)</code>。<br/>
+Go的數據類型有兩種：一種是<code>語言內置的數據類型</code>，另外一種是<code>通過語言提供的自定義數據類型方法自己定義的自定義數據類型</code>。</p>
+
+<p>先看看語言<code>內置的基礎數據類型</code></p>
+
+<p><strong>數值型(Number)</strong></p>
+
+<p>數值型有<code>三種</code>，一種是<code>整數類型</code>，另外一種是<code>帶小數的類型</code>(一般計算機裡面叫做<code>浮點數類型</code>)，還有一種<code>虛數類型</code>。</p>
+
+<p>整數類型不用說了，和數學裡面的是一樣的。和數學裡面不同的地方在於計算機裡面<code>正整數和零</code>統稱為<code>無符號整型</code>，而<code>負整數</code>則稱為<code>有符號整型</code>。</p>
+
+<p>Go的內置整型有<code>uint8</code>, <code>uint16</code>, <code>uint32</code>, <code>uint64</code>, <code>int8</code>, <code>int16</code>, <code>int32</code>和<code>int64</code>。其中<code>u</code>開頭的類型就是<code>無符號整型</code>。無符號類型能夠表示正整數和零。而有符號類型除了能夠表示正整數和零外，還可以表示負整數。
+另外還有一些別名類型，比如<code>byte</code>類型，這個類型和<code>uint8</code>是一樣的，表示<code>字節類型</code>。另外一個是<code>rune類型</code>，這個類型和<code>int32</code>是一樣的，用來表示<code>unicode的代碼點</code>，就是unicode字符所對應的整數。</p>
+
+<p>Go還定義了三個<code>依賴系統</code>的類型，<code>uint</code>，<code>int</code>和<code>uintptr</code>。因為在32位系統和64位系統上用來表示這些類型的位數是不一樣的。</p>
+
+<p><em>對於32位系統</em></p>
+
+<p>uint=uint32<br/>
+int=int32<br/>
+uintptr為32位的指針</p>
+
+<p><em>對於64位系統</em></p>
+
+<p>uint=uint64<br/>
+int=int64<br/>
+uintptr為64位的指針</p>
+
+<p>至於類型後面跟的數字8，16，32或是64則表示用來表示這個類型的位不同，<code>位越多，能表示的整數范圍越大</code>。
+比如對於用N位來表示的整數，如果是<code>有符號的整數</code>，能夠表示的整數范圍為<code>-2^(N-1) ~ 2^(N-1)－1</code>；如果是<code>無符號的整數</code>，則能表示的整數范圍為<code>0 ～ 2^N</code>。</p>
+
+<p>Go的浮點數類型有兩種，<code>float32</code>和<code>float64</code>。float32又叫<code>單精度浮點型</code>，float64又叫做<code>雙精度浮點型</code>。其<code>最主要的區別就是小數點後面能跟的小數位數不同</code>。</p>
+
+<p>另外Go還有兩個其他語言所沒有的類型，<code>虛數類型</code>。<code>complex64</code>和<code>complex128</code>。</p>
+
+<p>對於數值類型，其所共有的操作為<code>加法(＋)</code>，<code>減法(－)</code>，<code>乘法(＊)</code>和<code>除法(/)</code>。另外對於<code>整數類型</code>，還定義了<code>求余運算(%)</code></p>
+
+<p>求余運算為整型所獨有。如果對浮點數使用求余，比如這樣</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var a float64 = 12
+    var b float64 = 3
+
+    fmt.Println(a % b)
+}
+</code></pre>
+
+<p>編譯時候會報錯</p>
+
+<pre><code>invalid operation: a % b (operator % not defined on float64)
+</code></pre>
+
+<p>所以，這裡我們可以知道所謂的<code>數據類型有兩層意思</code>，一個是定義了<code>該類型所能表示的數</code>，另一個是定義了<code>該類型所能進行的操作</code>。
+簡單地說，對於一只小狗，你能想到的一定是狗的面貌和它會汪汪叫，而不是貓的面容和喵喵叫。</p>
+
+<p><strong>字符串類型(String)</strong></p>
+
+<p>字符串就是一串固定長度的字符連接起來的字符序列。Go的字符串是由<code>單個字節</code>連接起來的。（對於漢字，通常由多個字節組成）。這就是說，傳統的字符串是由字符組成的，而<code>Go的字符串不同</code>，是<code>由字節組成</code>的。這一點需要注意。</p>
+
+<p>字符串的表示很簡單。用(雙引號"")或者(``號)來描述。</p>
+
+<pre><code>"hello world"
+</code></pre>
+
+<p>或者</p>
+
+<pre><code>`hello world`
+</code></pre>
+
+<p>唯一的區別是，<strong>雙引號之間的轉義字符會被轉義，而``號之間的轉義字符保持原樣不變</strong>。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var a = "hello \n world"
+    var b = `hello \n world`
+
+    fmt.Println(a)
+    fmt.Println("----------")
+    fmt.Println(b)
+}
+</code></pre>
+
+<p>輸出結果為</p>
+
+<pre><code>hello 
+ world
+----------
+hello \n world
+</code></pre>
+
+<p>字符串所能進行的一些基本操作包括:<br/>
+（1）<code>獲取字符長度</code><br/>
+（2）<code>獲取字符串中單個字節</code><br/>
+（3）<code>字符串連接</code></p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var a string = "hello"
+    var b string = "world"
+
+    fmt.Println(len(a))
+    fmt.Println(a[1])
+    fmt.Println(a + b)
+}
+</code></pre>
+
+<p>輸出如下</p>
+
+<pre><code>5
+101
+helloworld
+</code></pre>
+
+<p>這裡我們看到a[1]得到的是一個整數，這就證明了上面<code>"Go的字符串是由字節組成的這句話"</code>。我們還可以再驗證一下。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var a string = "你"
+    var b string = "好"
+    fmt.Println(len(a))
+    fmt.Println(len(b))
+    fmt.Println(len(a + b))
+    fmt.Println(a[0])
+    fmt.Println(a[1])
+    fmt.Println(a[2])
+}
+</code></pre>
+
+<p>輸出</p>
+
+<pre><code>3
+3
+6
+228
+189
+160
+</code></pre>
+
+<p>我們開始的時候，從上面的三行輸出知道，"你"和"好"分別是用三個字節組成的。我們依次獲取a的三個字節，輸出，得到結果。</p>
+
+<p><strong>布爾型(Bool)</strong></p>
+
+<p>布爾型是表示<code>真值</code>和<code>假值</code>的類型。可選值為<code>true</code>和<code>false</code>。</p>
+
+<p>所能進行的操作如下：
+<code>&amp;&amp; and 與</code>
+<code>|| or 或</code>
+<code>!  not 非</code></p>
+
+<p>Go的布爾型取值<code>就是true</code>或<code>false</code>。<code>任何空值(nil)或者零值(0, 0.0, "")都不能作為布爾型來直接判斷</code>。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var equal bool
+    var a int = 10
+    var b int = 20
+    equal = (a == b)
+    fmt.Println(equal)
+}
+</code></pre>
+
+<p>輸出結果</p>
+
+<pre><code>false
+</code></pre>
+
+<p>下面是錯誤的用法</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    if 0 {
+        fmt.Println("hello world")
+    }
+    if nil {
+        fmt.Println("hello world")
+    }
+    if "" {
+        fmt.Println("hello world")
+    }
+}
+</code></pre>
+
+<p>編譯錯誤</p>
+
+<pre><code>./t.go:8: non-bool 0 (type untyped number) used as if condition
+./t.go:11: non-bool nil used as if condition
+./t.go:14: non-bool "" (type untyped string) used as if condition
+</code></pre>
+
+<p>上面介紹的是Go語言內置的基礎數據類型。</p>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script type="text/javascript" src="highlight.pack.js"></script>
+<script type="text/javascript" >hljs.initHighlightingOnLoad();</script>
+<title>使用包和測試管理項目</title>
+
+</head>
+<body>
+<p>Go天生就是為了支持良好的項目管理體驗而設計的。</p>
+
+<p><strong>包</strong></p>
+
+<p>在軟件工程的實踐中，我們會遇到很多功能重復的代碼，比如去除字符串首尾的空格。高質量軟件產品的特點就是它的部分代碼是可以重用的，比如你不必每次寫個函數去去除字符串首尾的空格。</p>
+
+<p>我們上面講過變量，結構體，接口和函數等，事實上所謂的包，就是把一些用的多的這些變量，結構體，接口和函數等統一放置在一個邏輯塊中。並且給它們起一個名字，這個名字就叫做包名。</p>
+
+<p>例如我們上面用的最多的fmt包，這個包提供了很多格式化輸出的函數，你可以在自己的代碼中引用這個包，來做格式化輸出，而不用你自己每次去寫個函數。一門成熟的語言都會提供齊全的基礎功能包供人調用。</p>
+
+<p>使用包有三個好處</p>
+
+<ol>
+<li>可以減少函數名稱重復，因為不同包中可以存在名稱相同的函數。否則得話，你得給這些函數加上前綴或者後綴以示區別。</li>
+<li>包把函數等組織在一起，方便你查找和重用。比如你想用Println()函數輸出一行字符串，你可以很方便地知道它在fmt包中，直接引用過來用就可以了。</li>
+<li>使用包可以加速程序編譯。因為包是預編譯好的，你改動自己代碼得時候，不必每次去把包編譯一下。</li>
+</ol>
+
+
+<p><strong>創建包</strong></p>
+
+<p>我們現在來舉個例子，用來演示Go的項目管理。</p>
+
+<p>首先我們在目錄<code>/Users/jemy/JemyGraw/GoLang</code>下面創建文件夾<code>pkg_demo</code>。然後在<code>pkg_demo</code>裡面創建<code>src</code>文件夾
+。然後再在<code>main</code>文件夾裡面創建<code>main.go</code>文件。另外為了演示包的創建，我們在<code>src</code>目錄下面創建文件夾<code>net.duokr</code>，然後再在<code>net.duokr</code>文件夾裡面創建<code>math</code>文件夾，這個文件夾名稱就是這個文件夾下面go文件的包名稱。然後我們再創建一個<code>math_pkg.go</code>文件，之所以取這個名字而不是<code>math.go</code>只是為了說明這個文件名稱和包名不需要一致。然後我們還創建了一個<code>math_pkg_test.go</code>文件作為包的測試用例文件。整體結構如下：</p>
+
+<pre><code>.
+└── src
+    ├── main
+    │   ├── build.sh
+    │   └── main.go
+    └── net.duokr
+        └── math
+            ├── math_pkg.go
+            └── math_pkg_test.go
+</code></pre>
+
+<p>其中build.sh是我們為了編譯這個項目而寫的腳本，因為編譯項目需要幾條命令，把它寫在腳本文件中方便使用。另外為了能夠讓build.sh能夠執行，使用<code>chmod +x build.sh</code>為它賦予可執行權限。build.bat是Windows下面的編譯腳本。
+我們來看一下<code>math_pkg.go</code>的定義：</p>
+
+<pre><code>package math
+
+func Add(a, b int) int {
+    return a + b
+}
+func Subtract(a, b int) int {
+    return a - b
+}
+func Multiply(a, b int) int {
+    return a * b
+}
+
+func Divide(a, b int) int {
+    if b == 0 {
+        panic("Can not divided by zero")
+    }
+    return a / b
+}
+</code></pre>
+
+<p>首先是包名，然後是幾個函數定義，這裡我們會發現這些<code>函數定義首字母都是大寫</code>，<code>Go規定了只有首字母大寫的函數才能從包導出使用，即其他調用這個包中函數的代碼只能調用那些導出的函數</code>。</p>
+
+<p>我們再看一下<code>main.go</code>的定義：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    math "net.duokr/math"
+)
+
+func main() {
+    var a = 100
+    var b = 200
+
+    fmt.Println("Add demo:", math.Add(a, b))
+    fmt.Println("Substract demo:", math.Subtract(a, b))
+    fmt.Println("Multiply demo:", math.Multiply(a, b))
+    fmt.Println("Divide demo:", math.Divide(a, b))
+}
+</code></pre>
+
+<p>在main.go裡面，我們使用import關鍵字引用我們自定義的包math，引用的方法是從main包平行的文件夾net.duokr開始，後面跟上包名math。這裡面我們給這個長長的包名起了一個別名就叫math。然後分別調用math包裡面的函數。</p>
+
+<p>最後我們看一下我們的編譯腳本：</p>
+
+<pre><code>export GOPATH=$GOPATH:/Users/jemy/JemyGraw/GoLang/pkg_demo
+export GOBIN=/Users/jemy/JemyGraw/GoLang/pkg_demo/bin
+go build net.duokr/math
+go build main.go
+go install main
+</code></pre>
+
+<p>第一行，我們將項目路徑加入GOPATH中，這樣待會兒編譯main.go的時候才能找到我們自定義的包；</p>
+
+<p>第二行，我們設置本項目的安裝目錄，第五行的命令將編譯好的文件放到這個目錄下面；</p>
+
+<p>第三行，我們編譯我們的自定義包；</p>
+
+<p>第四行，我們編譯我們main.go文件；</p>
+
+<p>第五行，將編譯好的文件安裝到指定目錄下。</p>
+
+<p>這裡還有一個Windows下面的編譯腳本build.bat：</p>
+
+<pre><code>@echo off
+set GOPATH=GOPATH;C:\JemyGraw\GoLang\pkg_demo
+set GOBIN=C:\JemyGraw\GoLang\pkg_demo\bin
+go build net.duokr\math
+go build main.go
+go install main
+</code></pre>
+
+<p>好了，運行腳本編譯一下，在main文件夾和bin文件夾下面都會生成一個可執行文件。</p>
+
+<p>這個時候文件夾結構為：</p>
+
+<pre><code>.
+├── bin
+│   └── main
+├── pkg
+│   └── darwin_386
+│       └── net.duokr
+│           └── math.a
+└── src
+    ├── main
+    │   ├── build.bat
+    │   ├── build.sh
+    │   ├── main
+    │   └── main.go
+    └── net.duokr
+        └── math
+            ├── math_pkg.go
+            └── math_pkg_test.go
+</code></pre>
+
+<p>運行一下，輸出結果為：</p>
+
+<pre><code>Add demo: 300
+Substract demo: -100
+Multiply demo: 20000
+Divide demo: 0
+</code></pre>
+
+<p>好了，包的使用介紹完畢，我們再來看一下測試用例怎麼寫。</p>
+
+<p><strong>測試</strong></p>
+
+<p>在上面的例子中，我們發現我們自定義的包下面還有一個math_pkg_test.go文件，這個文件包含了本包的一些測試用例。而且Go會把以<code>_test.go</code>結尾的文件當作是測試文件。</p>
+
+<p>測試怎麼寫，當然是用assert來判斷程序的運行結果是否和預期的相同了。</p>
+
+<p>我們來看看這個math包的測試用例。</p>
+
+<pre><code>package math
+
+import (
+    "testing"
+)
+
+func TestAdd(t *testing.T) {
+    var a = 100
+    var b = 200
+
+    var val = Add(a, b)
+    if val != a+b {
+        t.Error("Test Case [", "TestAdd", "] Failed!")
+    }
+}
+
+func TestSubtract(t *testing.T) {
+    var a = 100
+    var b = 200
+
+    var val = Subtract(a, b)
+    if val != a-b {
+        t.Error("Test Case [", "TestSubtract", "] Failed!")
+    }
+}
+
+func TestMultiply(t *testing.T) {
+    var a = 100
+    var b = 200
+
+    var val = Multiply(a, b)
+    if val != a*b {
+        t.Error("Test Case [", "TestMultiply", "] Failed!")
+    }
+}
+
+func TestDivideNormal(t *testing.T) {
+    var a = 100
+    var b = 200
+
+    var val = Divide(a, b)
+    if val != a/b {
+        t.Error("Test Case [", "TestDivideNormal", "] Failed!")
+    }
+}
+</code></pre>
+
+<p>將路徑切換到測試文件所在目錄，運行<code>go test</code>命令，go會自動測試所有的測試用例。</p>
+
+<p>在上面的例子中，測試用例的特點是以函數名以<code>Test</code>開始，而且具有唯一參數<code>t *testing.T</code>。</p>
+
+<p><strong>小結</strong></p>
+
+<p>Go提供的包和用例測試是構建優秀的軟件產品的基礎，只要我們不斷學習，努力去做，一定可以做的很好。</p>
+</body>
+</html>

@@ -1,0 +1,318 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>程序控制結構</title>
+
+</head>
+<body>
+<p>雖然劇透可恥，但是為了體現Go語言的設計簡潔之處，必須要先劇透一下。</p>
+
+<p>Go語言的控制結構關鍵字只有</p>
+
+<p><code>if..else if..else</code>，<code>for</code> 和 <code>switch</code>。</p>
+
+<p>而且在Go中，為了避免格式化戰爭，對程序結構做了統一的強制的規定。看下下面的例子。</p>
+
+<p>請比較一下A程序和B程序的不同之處。</p>
+
+<p><strong>A程序</strong></p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    fmt.Println("hello world")
+}
+</code></pre>
+
+<p><strong>B程序</strong></p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() 
+{
+    fmt.Println("hello world")
+}
+</code></pre>
+
+<p>還記得我們前面的例子中，<code>{}</code>的格式是怎麼樣的麼？在上面的兩個例子中只有A例的寫法是對的。因為在Go語言中，強制了<code>{}</code>的格式。如果我們試圖去編譯B程序，那麼會發生如下的錯誤提示。</p>
+
+<pre><code>./test_format.go:9: syntax error: unexpected semicolon or newline before {
+</code></pre>
+
+<p><strong>if..else if..else</strong></p>
+
+<p>if..else if..else 用來判斷一個或者多個條件，然後根據條件的結果執行不同的程序塊。舉個簡單的例子。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var dog_age = 10
+
+    if dog_age &gt; 10 {
+        fmt.Println("A big dog")
+    } else if dog_age &gt; 1 &amp;&amp; dog_age &lt;= 10 {
+        fmt.Println("A small dog")
+    } else {
+        fmt.Println("A baby dog")
+    }
+}
+</code></pre>
+
+<p>上面的例子判斷狗狗的年齡如果<code>(if)</code>大於10就是一個大狗；否則判斷<code>(else if)</code>狗狗的年齡是否小於等於10且大於1，這個時候狗狗是小狗狗。否則<code>(else)</code>的話（就是默認狗狗的年齡小於等於1歲），那麼狗狗是Baby狗狗。</p>
+
+<p>在上面的例子中，我們還可以發現Go的if..else if..else語句的判斷條件一般都不需要使用<code>()</code>。當然如果你還是願意寫，也是對的。另外如果為了將某兩個或多個條件綁定在一起判斷的話，還是需要括號<code>()</code>的。</p>
+
+<p>比如下面的例子也是對的。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    const Male = 'M'
+    const Female = 'F'
+
+    var dog_age = 10
+    var dog_sex = 'M'
+
+    if (dog_age == 10 &amp;&amp; dog_sex == 'M') {
+        fmt.Println("dog")
+    }
+}
+</code></pre>
+
+<p>但是如果你使用Go提供的格式化工具來格式化這段代碼的話，Go會智能判斷你的括號是否必須有，否則的話，會幫你去掉的。你可以試試。</p>
+
+<pre><code>go fmt test_bracket.go
+</code></pre>
+
+<p>然後你會發現，咦？！果真被去掉了。</p>
+
+<p>另外因為每個判斷條件的結果要麼是true要麼是false，所以可以使用<code>&amp;&amp;</code>，<code>||</code>來連接不同的條件。使用<code>!</code>來對一個條件取反。</p>
+
+<p><strong>switch</strong></p>
+
+<p>switch的出現是為了解決某些情況下使用if判斷語句帶來的繁瑣之處。</p>
+
+<p>例如下面的例子：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    //score 為 [0,100]之間的整數
+    var score int = 69
+
+    if score &gt;= 90 &amp;&amp; score &lt;= 100 {
+        fmt.Println("優秀")
+    } else if score &gt;= 80 &amp;&amp; score &lt; 90 {
+        fmt.Println("良好")
+    } else if score &gt;= 70 &amp;&amp; score &lt; 80 {
+        fmt.Println("一般")
+    } else if score &gt;= 60 &amp;&amp; score &lt; 70 {
+        fmt.Println("及格")
+    } else {
+        fmt.Println("不及格")
+    }
+}
+</code></pre>
+
+<p>在上面的例子中，我們用if..else if..else來對分數進行分類。這個只是一般的情況下if判斷條件的數量。如果if..else if..else的條件太多的話，我們可以使用switch來優化程序。比如上面的程序我們還可以這樣寫：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    //score 為 [0,100]之間的整數
+    var score int = 69
+
+    switch score / 10 {
+    case 10:
+    case 9:
+        fmt.Println("優秀")
+    case 8:
+        fmt.Println("良好")
+    case 7:
+        fmt.Println("一般")
+    case 6:
+        fmt.Println("及格")
+    default:
+        fmt.Println("不及格")
+    }
+}
+</code></pre>
+
+<p>關於switch的幾點說明如下：</p>
+
+<p>(1) switch的判斷條件可以為任何數據類型。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var dog_sex = "F"
+    switch dog_sex {
+    case "M":
+        fmt.Println("A male dog")
+    case "F":
+        fmt.Println("A female dog")
+    }
+}
+</code></pre>
+
+<p>(2) 每個case後面跟的是一個完整的程序塊，該程序塊<code>不需要{}</code>，也<code>不需要break結尾</code>，因為每個case都是獨立的。</p>
+
+<p>(3) 可以為switch提供一個默認選項default，在上面所有的case都沒有滿足的情況下，默認執行default後面的語句。</p>
+
+<p><strong>for</strong></p>
+
+<p>for用在Go語言的循環條件裡面。比如說要你輸出1...100之間的自然數。最笨的方法就是直接這樣。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    fmt.Println(1)
+    fmt.Println(2)
+    ...
+    fmt.Println(100)
+}
+</code></pre>
+
+<p>這個不由地讓我想起一個笑話。</p>
+
+<blockquote><p>以前一個地主的兒子學習寫字，只學了三天就把老師趕走了。因為在這三天裡面他學寫了一，二，三。他覺得寫字真的太簡單了，不就是畫橫線嘛。於是有一天老爹過壽，讓他來記送禮的人名單。直到中午還沒有記完，老爹很奇怪就去問他怎麼了。他哭著說，「不知道這個人有什麼毛病，姓什麼不好，姓萬」。</p></blockquote>
+
+<p>哈哈，回來繼續。我們看到上面的例子也是如地主的兒子那樣就不好了。所以，我們必須使用循環結構。我們用for的循環語句來實現上面的例子。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var i int = 1
+
+    for ; i &lt;= 100; i++ {
+        fmt.Println(i)
+    }
+}
+</code></pre>
+
+<p>在上面的例子中，首先初始化變量i為1，然後在for循環裡面判斷是否小於等於100，如果是的話，輸出i，然後再使用i++來將i的值自增1。上面的例子，還有一個更好的寫法，就是將i的定義和初始化也放在for裡面。如下：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    for i := 1; i &lt;= 100; i++ {
+        fmt.Println(i)
+    }
+}
+</code></pre>
+
+<p>在Go裡面沒有提供while關鍵字，如果你懷念while的寫法也可以這樣：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var i int = 1
+
+    for i &lt;= 100 {
+        fmt.Println(i)
+        i++
+    }
+}
+</code></pre>
+
+<p>或許你會問，如果我要死循環呢？是不是<code>for true</code>？呵呵，不用了，直接這樣。</p>
+
+<pre><code>for{
+    ...
+}
+</code></pre>
+
+<p>以上就是Go提供的全部控制流程了。</p>
+
+<p>再復習一下，Go只提供了：</p>
+
+<p><strong>if</strong></p>
+
+<pre><code>if ...{
+    ...
+}else if ...{
+    ...
+}else{
+    ...
+}
+</code></pre>
+
+<p><strong>switch</strong></p>
+
+<pre><code>switch(...){
+case ...:
+         ...
+case ...:
+         ...
+...
+
+default:
+          ...
+}
+</code></pre>
+
+<p><strong>for</strong></p>
+
+<pre><code>for ...; ...; ...{
+    ...
+}
+
+for ...{
+    ...
+}
+
+for{
+    ...
+}
+</code></pre>
+</body>
+</html>

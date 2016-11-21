@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 數字解析</title>
+</head>
+<body>
+<p>從字符串解析出數字是一個基本的而且很常見的任務。
+Go內置的<code>strconv</code>提供了數字解析功能。</p>
+<pre><code>package main
+
+import "strconv"
+import "fmt"
+
+func main() {
+    // 使用ParseFloat解析浮點數，64是說明使用多少位
+    // 精度來解析
+    f, _ := strconv.ParseFloat("1.234", 64)
+    fmt.Println(f)
+
+    // 對於ParseInt函數，0 表示從字符串推斷整型進制，
+    // 則表示返回結果的位數
+    i, _ := strconv.ParseInt("123", 0, 64)
+    fmt.Println(i)
+
+    // ParseInt能夠解析出16進制的數字
+    d, _ := strconv.ParseInt("0x1c8", 0, 64)
+    fmt.Println(d)
+
+    // 還可以使用ParseUint函數
+    u, _ := strconv.ParseUint("789", 0, 64)
+    fmt.Println(u)
+
+    // Atoi是解析10進制整型的快捷方法
+    k, _ := strconv.Atoi("135")
+    fmt.Println(k)
+
+    // 解析函數在遇到無法解析的輸入時，會返回錯誤
+    _, e := strconv.Atoi("wat")
+    fmt.Println(e)
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>1.234
+123
+456
+789
+135
+strconv.ParseInt: parsing "wat": invalid syntax
+</code></pre></body>
+</html>

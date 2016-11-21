@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 讀取文件</title>
+</head>
+<body>
+<p>讀寫文件是很多程序的基本任務，下面我們看看Go裡面的文件讀取。</p>
+<pre><code>package main
+
+import (
+    "bufio"
+    "fmt"
+    "io"
+    "io/ioutil"
+    "os"
+)
+
+// 讀取文件的函數調用大多數都需要檢查錯誤，
+// 使用下面這個錯誤檢查方法可以方便一點
+func check(e error) {
+    if e != nil {
+        panic(e)
+    }
+}
+
+func main() {
+
+    // 最基本的文件讀寫任務就是把整個文件的內容讀取到內存
+    dat, err := ioutil.ReadFile("/tmp/dat")
+    check(err)
+    fmt.Print(string(dat))
+
+    // 有的時候你想更多地控制到底是讀取文件的哪個部分，這個
+    // 時候你可以使用`os.Open`打開一個文件獲取一個`os.File`
+    // 對象
+    f, err := os.Open("/tmp/dat")
+
+    // 從這個文件中讀取一些字節，並且由於字節數組長度所限，
+    // 最多讀取5個字節，另外還需要注意實際能夠讀取的字節
+    // 數量
+    b1 := make([]byte, 5)
+    n1, err := f.Read(b1)
+    check(err)
+    fmt.Printf("%d bytes: %s\n", n1, string(b1))
+
+    // 你也可以使用`Seek`來跳轉到文件中的一個已知位置，並從
+    // 那個位置開始讀取數據
+    o2, err := f.Seek(6, 0)
+    check(err)
+    b2 := make([]byte, 2)
+    n2, err := f.Read(b2)
+    check(err)
+    fmt.Printf("%d bytes @ %d: %s\n", n2, o2, string(b2))
+
+    // `io`包提供了一些幫助文件讀取的函數。例如上面的方法如果
+    // 使用方法`ReadAtLeast`函數來實現，將使得程序更健壯
+    o3, err := f.Seek(6, 0)
+    check(err)
+    b3 := make([]byte, 2)
+    n3, err := io.ReadAtLeast(f, b3, 2)
+    check(err)
+    fmt.Printf("%d bytes @ %d: %s\n", n3, o3, string(b3))
+
+    // 沒有內置的rewind方法，但是可以使用`Seek(0,0)`來實現
+    _, err = f.Seek(0, 0)
+    check(err)
+
+    // `bufio`包提供了緩沖讀取文件的方法，這將使得文件讀取更加
+    // 高效
+    r4 := bufio.NewReader(f)
+    b4, err := r4.Peek(5)
+    check(err)
+    fmt.Printf("5 bytes: %s\n", string(b4))
+
+    // 最後關閉打開的文件。一般來講這個方法會在打開文件的時候，
+    // 使用defer來延遲關閉
+    f.Close()
+}
+</code></pre>
+<p>在運行程序之前，你需要創建一個<code>/tmp/dat</code>文件，然後寫入一些測試數據。
+運行結果</p>
+<pre><code>hello world
+i am jemy
+who are you
+what do you like
+5 bytes: hello
+2 bytes @ 6: wo
+2 bytes @ 6: wo
+5 bytes: hello
+</code></pre></body>
+</html>

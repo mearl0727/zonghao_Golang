@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 原子計數器</title>
+</head>
+<body>
+<p>Go裡面的管理協程狀態的主要機制就是通道通訊。這些我們上面的例子介紹過。這裡還有一些管理狀態的機制，下面我們看看多協程原子訪問計數器的例子，這個功能是由sync/atomic包提供的函數來實現的。</p>
+<pre><code>package main
+
+import "fmt"
+import "time"
+import "sync/atomic"
+import "runtime"
+
+func main() {
+
+    // 我們使用一個無符號整型來代表一個永遠為正整數的counter
+    var ops uint64 = 0
+
+    // 為了模擬並行更新，我們使用50個協程來每隔1毫秒來
+    // 增加一下counter值，注意這裡的50協程裡面的for循環，
+    // 也就是說如果主協程不退出，這些協程將永遠運行下去
+    // 所以這個程序每次輸出的值有可能不一樣
+    for i := 0; i &lt; 50; i++ {
+        go func() {
+            for {
+                // 為了能夠保證counter值增加的原子性，我們使用
+                // atomic包中的AddUint64方法，將counter的地址和
+                // 需要增加的值傳遞給函數即可
+                atomic.AddUint64(&amp;ops, 1)
+
+                // 允許其他的協程來處理
+                runtime.Gosched()
+            }
+        }()
+    }
+
+    //等待1秒中，讓協程有時間運行一段時間
+    time.Sleep(time.Second)
+
+    // 為了能夠在counter仍被其他協程更新值的同時安全訪問counter值，
+    // 我們獲取一個當前counter值的拷貝，這裡就是opsFinal，需要把
+    // ops的地址傳遞給函數`LoadUint64`
+    opsFinal := atomic.LoadUint64(&amp;ops)
+    fmt.Println("ops:", opsFinal)
+}
+</code></pre>
+<p>我們多運行幾次，結果如下:</p>
+<pre><code>ops: 7499289
+ops: 7700843
+ops: 7342417
+</code></pre></body>
+</html>

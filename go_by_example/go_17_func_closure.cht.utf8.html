@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 閉包函數</title>
+</head>
+<body>
+<p>Go支持匿名函數，匿名函數可以形成閉包。閉包函數可以訪問定義閉包的函數定義的內部變量。</p>
+<p>示例1：</p>
+<pre><code>package main
+
+import "fmt"
+
+// 這個"intSeq"函數返回另外一個在intSeq內部定義的匿名函數，
+// 這個返回的匿名函數包住了變量i，從而形成了一個閉包
+func intSeq() func() int {
+    i := 0
+    return func() int {
+        i += 1
+        return i
+    }
+}
+
+func main() {
+    // 我們調用intSeq函數，並且把結果賦值給一個函數nextInt，
+    // 這個nextInt函數擁有自己的i變量，這個變量每次調用都被更新。
+    // 這裡i的初始值是由intSeq調用的時候決定的。
+    nextInt := intSeq()
+
+    // 調用幾次nextInt，看看閉包的效果
+    fmt.Println(nextInt())
+    fmt.Println(nextInt())
+    fmt.Println(nextInt())
+
+    // 為了確認閉包的狀態是獨立於intSeq函數的，再創建一個。
+    newInts := intSeq()
+    fmt.Println(newInts())
+}
+</code></pre>
+<p>輸出結果為</p>
+<pre><code>1
+2
+3
+1
+</code></pre>
+<p>示例2：</p>
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+    add10 := closure(10)//其實是構造了一個加10函數
+    fmt.Println(add10(5))
+    fmt.Println(add10(6))
+    add20 := closure(20)
+    fmt.Println(add20(5))
+}
+
+func closure(x int) func(y int) int {
+    return func(y int) int {
+        return x + y
+    }
+
+}
+</code></pre>
+<p>輸出結果為：</p>
+<pre><code>15
+16
+25
+</code></pre>
+<p>示例3：</p>
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+
+    var fs []func() int
+
+    for i := 0; i &lt; 3; i++ {
+
+        fs = append(fs, func() int {
+
+            return i
+        })
+    }
+    for _, f := range fs {
+        fmt.Printf("%p = %v\n", f, f())
+    }
+}
+</code></pre>
+<p>輸出結果：</p>
+<pre><code>0x401200 = 3
+0x401200 = 3
+0x401200 = 3
+</code></pre>
+<p>示例4：</p>
+<pre><code>package main
+
+import "fmt"
+
+func adder() func(int) int {
+    sum := 0
+    return func(x int) int {
+        sum += x
+        return sum
+    }
+}
+
+func main() {
+    result := adder()
+    for i := 0; i &lt; 10; i++ {
+        fmt.Println(result(i))
+    }
+}
+</code></pre>
+<p>輸出結果為：</p>
+<pre><code>0
+1
+3
+6
+10
+15
+21
+28
+36
+45
+</code></pre></body>
+</html>

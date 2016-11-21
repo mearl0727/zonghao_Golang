@@ -1,0 +1,569 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go函數</title>
+
+</head>
+<body>
+<p>是時候討論一下Go的函數定義了。</p>
+
+<p><strong>什麼是函數</strong></p>
+
+<p>函數，簡單來講就是一段將<code>輸入數據</code>轉換為<code>輸出數據</code>的<code>公用代碼塊</code>。當然有的時候函數的返回值為空，那麼就是說輸出數據為空。而真正的處理過程在函數內部已經完成了。</p>
+
+<p>想一想我們為什麼需要函數，最直接的需求就是代碼中有太多的重復代碼了，為了代碼的可讀性和可維護性，將這些重復代碼重構為函數也是必要的。</p>
+
+<p><strong>函數定義</strong></p>
+
+<p>先看一個例子</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func slice_sum(arr []int) int {
+    sum := 0
+    for _, elem := range arr {
+        sum += elem
+    }
+    return sum
+}
+
+func main() {
+    var arr1 = []int{1, 3, 2, 3, 2}
+    var arr2 = []int{3, 2, 3, 1, 6, 4, 8, 9}
+    fmt.Println(slice_sum(arr1))
+    fmt.Println(slice_sum(arr2))
+}
+</code></pre>
+
+<p>在上面的例子中，我們需要分別計算兩個切片的元素和。如果我們把計算切片元素的和的代碼分別為兩個切片展開，那麼代碼就失去了簡潔性和一致性。假設你預想實現同樣功能的代碼在拷貝粘貼的過程中發生了錯誤，比如忘記改變量名之類的，到時候debug到崩潰吧。因為這時很有可能你就先入為主了，因為模板代碼沒有錯啊，是不是。所以函數就是這個用處。</p>
+
+<p>我們再仔細看一下上面的函數定義：</p>
+
+<p>首先是關鍵字<code>func</code>，然後後面是<code>函數名稱</code>，<code>參數列表</code>，最後是<code>返回值列表</code>。當然如果函數沒有參數列表或者返回值，那麼這兩項都是可選的。其中返回值兩邊的括號在只聲明一個返回值類型的時候可以省略。</p>
+
+<p><strong>命名返回值</strong></p>
+
+<p>Go的函數很有趣，你甚至可以為返回值預先定義一個名稱，在函數結束的時候，直接一個return就可以返回所有的預定義返回值。例如上面的例子，我們將sum作為命名返回值。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func slice_sum(arr []int) (sum int) {
+    sum = 0
+    for _, elem := range arr {
+        sum += elem
+    }
+    return
+}
+
+func main() {
+    var arr1 = []int{1, 3, 2, 3, 2}
+    var arr2 = []int{3, 2, 3, 1, 6, 4, 8, 9}
+    fmt.Println(slice_sum(arr1))
+    fmt.Println(slice_sum(arr2))
+}
+</code></pre>
+
+<p>這裡要注意的是，如果你定義了命名返回值，那麼在函數內部你將不能再重復定義一個同樣名稱的變量。比如第一個例子中我們用<code>sum:=0</code>來定義和初始化變量sum，而在第二個例子中，我們只能用<code>sum=0</code>初始化這個變量了。因為<code>:=</code>表示的是定義並且初始化變量。</p>
+
+<p><strong>實參數和虛參數</strong></p>
+
+<p>可能你聽說過函數的實參數和虛參數。其實所謂的<code>實參數就是函數調用的時候傳入的參數</code>。在上面的例子中，實參就是<code>arr1</code>和<code>arr2</code>，而<code>虛參數就是函數定義的時候表示函數需要傳入哪些參數的占位參數</code>。在上面的例子中，虛參就是<code>arr</code>。<code>實參和虛參的名字不必是一樣的。即使是一樣的，也互不影響。</code>因為虛參是函數的內部變量。而實參則是另一個函數的內部變量或者是全局變量。它們的作用域不同。如果一個函數的虛參碰巧和一個全局變量名稱相同，那麼函數使用的也是虛參。例如我們再修改一下上面的例子。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+var arr = []int{1, 3, 2, 3, 2}
+
+func slice_sum(arr []int) (sum int) {
+    sum = 0
+    for _, elem := range arr {
+        sum += elem
+    }
+    return
+}
+
+func main() {
+    var arr2 = []int{3, 2, 3, 1, 6, 4, 8, 9}
+    fmt.Println(slice_sum(arr))
+    fmt.Println(slice_sum(arr2))
+}
+</code></pre>
+
+<p>在上面的例子中，我們定義了全局變量arr並且初始化值，而我們的slice_sum函數的虛參也是arr，但是程序同樣正常工作。</p>
+
+<p><strong>函數多返回值</strong></p>
+
+<p>記不記得你在java或者c裡面需要返回多個值時還得去定義一個對象或者結構體的呢？在Go裡面，你不需要這麼做了。Go函數支持你返回多個值。</p>
+
+<p>其實函數的多返回值，我們在上面遇見過很多次了。那就是<code>range</code>函數。這個函數用來迭代數組或者切片的時候返回的是兩個值，一個是數組或切片元素的索引，另外一個是數組或切片元素。在上面的例子中，因為我們不需要元素的索引，所以我們用一個特殊的忽略返回值符號<code>下劃線(_)</code>來忽略索引。</p>
+
+<p>假設上面的例子我們除了返回切片的元素和，還想返回切片元素的平均值，那麼我們修改一下代碼。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func slice_sum(arr []int) (int, float64) {
+    sum := 0
+    avg := 0.0
+    for _, elem := range arr {
+        sum += elem
+    }
+    avg = float64(sum) / float64(len(arr))
+    return sum, avg
+}
+
+func main() {
+    var arr1 = []int{3, 2, 3, 1, 6, 4, 8, 9}
+    fmt.Println(slice_sum(arr1))
+}
+</code></pre>
+
+<p>很簡單吧，當然我們還可以將上面的參數定義為命名參數</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func slice_sum(arr []int) (sum int, avg float64) {
+    sum = 0
+    avg = 0.0
+    for _, elem := range arr {
+        sum += elem
+    }
+    avg = float64(sum) / float64(len(arr))
+    //return sum, avg
+    return
+}
+
+func main() {
+    var arr1 = []int{3, 2, 3, 1, 6, 4, 8, 9}
+    fmt.Println(slice_sum(arr1))
+}
+</code></pre>
+
+<p>在上面的代碼裡面，將<code>return sum, avg</code>給注釋了而直接使用<code>return</code>。其實這兩種返回方式都可以。</p>
+
+<p><strong>變長參數</strong></p>
+
+<p>想一想我們的fmt包裡面的Println函數，它怎麼知道你傳入的參數個數呢？</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    fmt.Println(1)
+    fmt.Println(1, 2)
+    fmt.Println(1, 2, 3)
+}
+</code></pre>
+
+<p>這個要歸功於Go的一大特性，支持可變長參數列表。</p>
+
+<p>首先我們來看一個例子</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func sum(arr ...int) int {
+    sum := 0
+    for _, val := range arr {
+        sum += val
+    }
+    return sum
+}
+func main() {
+    fmt.Println(sum(1))
+    fmt.Println(sum(1, 2))
+    fmt.Println(sum(1, 2, 3))
+}
+</code></pre>
+
+<p>在上面的例子中，我們將原來的切片參數修改為可變長參數，然後使用range函數迭代這些參數，並求和。
+從這裡我們可以看出至少一點那就是<code>可變長參數列表裡面的參數類型都是相同的</code>（<em>如果你對這句話表示懷疑，可能是因為你看到Println函數恰恰可以輸出不同類型的可變參數，這個問題的答案要等到我們介紹完Go的接口後才行</em>）。</p>
+
+<p>另外還有一點需要注意，那就是<code>可變長參數定義只能是函數的最後一個參數</code>。比如下面的例子：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func sum(base int, arr ...int) int {
+    sum := base
+    for _, val := range arr {
+        sum += val
+    }
+    return sum
+}
+func main() {
+    fmt.Println(sum(100, 1))
+    fmt.Println(sum(200, 1, 2))
+    fmt.Println(sum(300, 1, 2, 3))
+}
+</code></pre>
+
+<p>這裡不知道你是否覺得這個例子其實和那個切片的例子很像啊，在哪裡呢？</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func sum(base int, arr ...int) int {
+    sum := base
+    for _, val := range arr {
+        sum += val
+    }
+    return sum
+}
+func main() {
+    var arr1 = []int{1, 2, 3, 4, 5}
+    fmt.Println(sum(300, arr1...))
+}
+</code></pre>
+
+<p>呵呵，就是把切片「啪，啪，啪」三個耳光打碎了，傳遞過去啊！:-P</p>
+
+<p><strong>閉包函數</strong></p>
+
+<p>曾經使用python和javascript的時候就在想，如果有一天可以把這兩種語言的特性做個並集該有多好。</p>
+
+<p>這一天終於來了，Go支持閉包函數。</p>
+
+<p>首先看一個閉包函數的例子。所謂閉包函數就是將整個函數的定義一氣呵成寫好並賦值給一個變量。然後用這個變量名作為函數名去調用函數體。</p>
+
+<p>我們將剛剛的例子修改一下：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var arr1 = []int{1, 2, 3, 4, 5}
+
+    var sum = func(arr ...int) int {
+        total_sum := 0
+        for _, val := range arr {
+            total_sum += val
+        }
+        return total_sum
+    }
+    fmt.Println(sum(arr1...))
+}
+</code></pre>
+
+<p>從這裡我們可以看出，其實閉包函數也沒有什麼特別之處。因為Go不支持在一個函數的內部再定義一個嵌套函數，所以使用閉包函數能夠實現在一個函數內部定義另一個函數的目的。</p>
+
+<p>這裡我們需要注意的一個問題是，閉包函數對它外層的函數中的變量具有<code>訪問</code>和<code>修改</code>的權限。例如：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var arr1 = []int{1, 2, 3, 4, 5}
+    var base = 300
+    var sum = func(arr ...int) int {
+        total_sum := 0
+        total_sum += base
+        for _, val := range arr {
+            total_sum += val
+        }
+        return total_sum
+    }
+    fmt.Println(sum(arr1...))
+}
+</code></pre>
+
+<p>這個例子，輸出315，因為total_sum加上了base的值。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    var base = 0
+    inc := func() {
+        base += 1
+    }
+    fmt.Println(base)
+    inc()
+    fmt.Println(base)
+}
+</code></pre>
+
+<p>在上面的例子中，閉包函數修改了main函數的局部變量base。</p>
+
+<p>最後我們來看一個閉包的示例，生成偶數序列。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func createEvenGenerator() func() uint {
+    i := uint(0)
+    return func() (retVal uint) {
+        retVal = i
+        i += 2
+        return
+    }
+}
+func main() {
+    nextEven := createEvenGenerator()
+    fmt.Println(nextEven())
+    fmt.Println(nextEven())
+    fmt.Println(nextEven())
+}
+</code></pre>
+
+<p>這個例子很有意思的，因為我們定義了一個<code>返回函數定義</code>的函數。而所返回的函數定義就是<code>在這個函數的內部定義的閉包函數</code>。這個閉包函數在外層函數調用的時候，每次都生成一個新的偶數（加2操作）然後返回閉包函數定義。</p>
+
+<p>其中<code>func() uint</code>就是函數createEvenGenerator的返回值。在createEvenGenerator中，這個返回值是return返回的閉包函數定義。</p>
+
+<pre><code>func() (retVal uint) {
+        retVal = i
+        i += 2
+        return
+    }
+</code></pre>
+
+<p>因為createEvenGenerator函數返回的是一個函數定義，所以我們再把它賦值給一個代表函數的變量，然後用這個代表閉包函數的變量去調用函數執行。</p>
+
+<p><strong>遞歸函數</strong></p>
+
+<p>每次談到遞歸函數，必然繞不開階乘和斐波拉切數列。</p>
+
+<p>階乘</p>
+
+<pre><code>package main
+
+/**
+    n!=1*2*3*...*n
+*/
+import (
+    "fmt"
+)
+
+func factorial(x uint) uint {
+    if x == 0 {
+        return 1
+    }
+    return x * factorial(x-1)
+}
+
+func main() {
+    fmt.Println(factorial(5))
+}
+</code></pre>
+
+<p>如果x為0，那麼返回1，因為0!=1。如果x是1，那麼f(1)=1<em>f(0)，如果x是2，那麼f(2)=2</em>f(1)=2<em>1</em>f(0)，依次推斷f(x)=x<em>(x-1)</em>...<em>2</em>1*f(0)。</p>
+
+<p>從上面看出所謂遞歸，就是在函數的內部重復調用一個函數的過程。需要注意的是這個函數必須能夠一層一層分解，並且有出口。上面的例子出口就是0。</p>
+
+<p>斐波拉切數列</p>
+
+<p>求第N個斐波拉切元素</p>
+
+<pre><code>package main
+
+/**
+    f(1)=1
+    f(2)=2
+    f(n)=f(n-2)+f(n-1)
+*/
+import (
+    "fmt"
+)
+
+func fibonacci(n int) int {
+    var retVal = 0
+    if n == 1 {
+        retVal = 1
+    } else if n == 2 {
+        retVal = 2
+    } else {
+        retVal = fibonacci(n-2) + fibonacci(n-1)
+    }
+    return retVal
+
+}
+func main() {
+    fmt.Println(fibonacci(5))
+}
+</code></pre>
+
+<p>斐波拉切第一個元素是1，第二個元素是2，後面的元素依次是前兩個元素的和。</p>
+
+<p>其實對於遞歸函數來講，只要知道了函數的出口，後面的不過是讓計算機去不斷地推斷，一直推斷到這個出口。理解了這一點，遞歸就很好理解了。</p>
+
+<p><strong>異常處理</strong></p>
+
+<p>當你讀取文件失敗而退出的時候是否擔心文件句柄是否已經關閉？抑或是你對於try...catch...finally的結構中finally裡面的代碼和try裡面的return代碼那個先執行這樣的問題痛苦不已？</p>
+
+<p>一切都結束了。一門完美的語言必須有一個清晰的無歧義的執行邏輯。</p>
+
+<p>好，來看看Go提供的異常處理。</p>
+
+<p><em>defer</em></p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func first() {
+    fmt.Println("first func run")
+}
+func second() {
+    fmt.Println("second func run")
+}
+
+func main() {
+    defer second()
+    first()
+}
+</code></pre>
+
+<p>Go語言提供了關鍵字<code>defer</code>來在函數運行結束的時候運行一段代碼或調用一個清理函數。上面的例子中，雖然second()函數寫在first()函數前面，但是由於使用了defer標注，所以它是在main函數執行結束的時候才調用的。</p>
+
+<p>所以輸出結果</p>
+
+<pre><code>first func run
+second func run
+</code></pre>
+
+<p><code>defer</code>用途最多的在於釋放各種資源。比如我們讀取一個文件，讀完之後需要釋放文件句柄。</p>
+
+<pre><code>package main
+
+import (
+    "bufio"
+    "fmt"
+    "os"
+    "strings"
+)
+
+func main() {
+    fname := "D:\\Temp\\test.txt"
+    f, err := os.Open(fname)
+    defer f.Close()
+    if err != nil {
+        os.Exit(1)
+    }
+    bReader := bufio.NewReader(f)
+    for {
+        line, ok := bReader.ReadString('\n')
+        if ok != nil {
+            break
+        }
+        fmt.Println(strings.Trim(line, "\r\n"))
+    }
+}
+</code></pre>
+
+<p>在上面的例子中，我們按行讀取文件，並且輸出。從代碼中，我們可以看到在使用os包中的Open方法打開文件後，立馬跟著一個defer語句用來關閉文件句柄。這樣就保證了該文件句柄在main函數運行結束的時候或者異常終止的時候一定能夠被釋放。而且由於緊跟著Open語句，一旦養成了習慣，就不會忘記去關閉文件句柄了。</p>
+
+<p><em>panic</em> &amp; <em>recover</em></p>
+
+<blockquote><p>當你周末走在林蔭道上，聽著小歌，哼著小曲，很是愜意。突然之間，從天而降瓢潑大雨，你頓時慌張（panic）起來，沒有帶傘啊，淋著雨感冒就不好了。於是你四下張望，忽然發現自己離地鐵站很近，那裡有很多賣傘的，心中頓時又安定了下來（recover），於是你飛奔過去買了一把傘（defer）。</p></blockquote>
+
+<p>好了，panic和recover是Go語言提供的用以處理異常的關鍵字。<code>panic用來觸發異常</code>，而<code>recover用來終止異常並且返回傳遞給panic的值</code>。（注意<code>recover並不能處理異常</code>，而且<code>recover只能在defer裡面使用，否則無效</code>。）</p>
+
+<p>先瞧個小例子</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    fmt.Println("I am walking and singing...")
+    panic("It starts to rain cats and dogs")
+    msg := recover()
+    fmt.Println(msg)
+}
+</code></pre>
+
+<p>看看輸出結果</p>
+
+<pre><code>runtime.panic(0x48d380, 0xc084003210)
+    C:/Users/ADMINI~1/AppData/Local/Temp/2/bindist667667715/go/src/pkg/runtime/panic.c:266  +0xc8
+main.main()
+    D:/JemyGraw/Creation/Go/freebook_go/func_d1.go:9 +0xea
+exit status 2
+</code></pre>
+
+<p>咦？怎麼沒有輸出recover獲取的錯誤信息呢？</p>
+
+<p>這是因為在運行到panic語句的時候，程序已經異常終止了，後面的代碼就不運行了。</p>
+
+<p>那麼如何才能阻止程序異常終止呢？這個時候要使用defer。因為<code>defer一定是在函數執行結束的時候運行的。不管是正常結束還是異常終止</code>。</p>
+
+<p>修改一下代碼</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    defer func() {
+        msg := recover()
+        fmt.Println(msg)
+    }()
+    fmt.Println("I am walking and singing...")
+    panic("It starts to rain cats and dogs")
+}
+</code></pre>
+
+<p>好了，看下輸出</p>
+
+<pre><code>I am walking and singing...
+It starts to rain cats and dogs
+</code></pre>
+
+<p>小結：</p>
+
+<p>panic觸發的異常通常是運行時錯誤。比如試圖訪問的索引超出了數組邊界，忘記初始化字典或者任何無法輕易恢復到正常執行的錯誤。</p>
+</body>
+</html>

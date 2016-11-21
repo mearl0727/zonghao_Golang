@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 通道方向</title>
+</head>
+<body>
+<p>當使用通道作為函數的參數時，你可以指定該通道是只讀的還是只寫的。這種設置有時候會提高程序的參數類型安全。</p>
+<pre><code>package main
+
+import "fmt"
+
+// 這個ping函數只接收能夠發送數據的通道作為參數，試圖從這個通道接收數據
+// 會導致編譯錯誤，這裡只寫的定義方式為`chan&lt;- string`表示這個類型為
+// 字符串的通道為只寫通道
+func ping(pings chan&lt;- string, msg string) {
+    pings &lt;- msg
+}
+
+// pong函數接收兩個通道參數，一個是只讀的pings，使用`&lt;-chan string`定義
+// 另外一個是只寫的pongs，使用`chan&lt;- string`來定義
+func pong(pings &lt;-chan string, pongs chan&lt;- string) {
+    msg := &lt;-pings
+    pongs &lt;- msg
+}
+
+func main() {
+    pings := make(chan string, 1)
+    pongs := make(chan string, 1)
+    ping(pings, "passed message")
+    pong(pings, pongs)
+    fmt.Println(&lt;-pongs)
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>passed message
+</code></pre>
+<p>其實這個例子就是把信息首先寫入pings通道裡面，然後在pong函數裡面再把信息從pings通道裡面讀出來再寫入pongs通道裡面，最後在main函數裡面將信息從pongs通道裡面讀出來。
+在這裡，pings和pongs事實上是可讀且可寫的，不過作為參數傳遞的時候，函數參數限定了通道的方向。不過pings和pongs在ping和pong函數裡面還是可讀且可寫的。只是ping和pong函數調用的時候把它們當作了只讀或者只寫。</p></body>
+</html>

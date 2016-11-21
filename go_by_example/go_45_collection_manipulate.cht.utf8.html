@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 集合功能</title>
+</head>
+<body>
+<p>我們經常需要程序去處理一些集合數據，比如選出所有符合條件的數據或者使用一個自定義函數將一個集合元素拷貝到另外一個集合。</p>
+<p>在一些語言裡面，通常是使用泛化數據結構或者算法。但是Go不支持泛化類型，在Go裡面如果你的程序或者數據類型需要操作集合，那麼通常是為集合提供一些操作函數。</p>
+<p>這裡演示了一些操作strings切片的集合函數，你可以使用這些例子來構建你自己的函數。注意在有些情況下，使用內聯集合操作代碼會更清晰，而不是去創建新的幫助函數。</p>
+<pre><code>package main
+
+import "strings"
+import "fmt"
+
+// 返回t在vs中第一次出現的索引，如果沒有找到t，返回－1
+func Index(vs []string, t string) int {
+    for i, v := range vs {
+        if v == t {
+            return i
+        }
+    }
+    return -1
+}
+
+// 如果t存在於vs中，那麼返回true，否則false
+func Include(vs []string, t string) bool {
+    return Index(vs, t) &gt;= 0
+}
+
+// 如果使用vs中的任何一個字符串作為函數f的參數可以讓f返回true，
+// 那麼返回true，否則false
+func Any(vs []string, f func(string) bool) bool {
+    for _, v := range vs {
+        if f(v) {
+            return true
+        }
+    }
+    return false
+}
+
+// 如果分別使用vs中所有的字符串作為f的參數都能讓f返回true，
+// 那麼返回true，否則返回false
+func All(vs []string, f func(string) bool) bool {
+    for _, v := range vs {
+        if !f(v) {
+            return false
+        }
+    }
+    return true
+}
+
+// 返回一個新的字符串切片，切片的元素為vs中所有能夠讓函數f
+// 返回true的元素
+func Filter(vs []string, f func(string) bool) []string {
+    vsf := make([]string, 0)
+    for _, v := range vs {
+        if f(v) {
+            vsf = append(vsf, v)
+        }
+    }
+    return vsf
+}
+
+// 返回一個bool類型切片，切片的元素為vs中所有字符串作為f函數
+// 參數所返回的結果
+func Map(vs []string, f func(string) string) []string {
+    vsm := make([]string, len(vs))
+    for i, v := range vs {
+        vsm[i] = f(v)
+    }
+    return vsm
+}
+
+func main() {
+
+    // 來，試試我們的字符串切片操作函數
+    var strs = []string{"peach", "apple", "pear", "plum"}
+
+    fmt.Println(Index(strs, "pear"))
+
+    fmt.Println(Include(strs, "grape"))
+
+    fmt.Println(Any(strs, func(v string) bool {
+        return strings.HasPrefix(v, "p")
+    }))
+
+    fmt.Println(All(strs, func(v string) bool {
+        return strings.HasPrefix(v, "p")
+    }))
+
+    fmt.Println(Filter(strs, func(v string) bool {
+        return strings.Contains(v, "e")
+    }))
+
+    // 上面的例子都使用匿名函數，你也可以使用命名函數
+    fmt.Println(Map(strs, strings.ToUpper))
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>2
+false
+true
+false
+[peach apple pear]
+[PEACH APPLE PEAR PLUM]
+</code></pre></body>
+</html>

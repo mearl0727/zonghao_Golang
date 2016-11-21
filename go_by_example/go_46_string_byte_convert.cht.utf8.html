@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go String與Byte切片之間的轉換</title>
+</head>
+<body>
+<p>String轉換到Byte數組時，每個byte(byte類型其實就是uint8)保存字符串對應字節的數值。</p>
+<p>注意Go的字符串是UTF-8編碼的，每個字符長度是不確定的，一些字符可能是1、2、3或者4個字節結尾。</p>
+<p>示例1：</p>
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+
+    s1 := "abcd"
+    b1 := []byte(s1)
+    fmt.Println(b1) // [97 98 99 100]
+
+    s2 := "中文"
+    b2 := []byte(s2)
+    fmt.Println(b2)  // [228 184 173 230 150 135], unicode，每個中文字符會由三個byte組成
+
+    r1 := []rune(s1)
+    fmt.Println(r1) // [97 98 99 100], 每個字一個數值
+
+    r2 := []rune(s2)
+    fmt.Println(r2) // [20013 25991], 每個字一個數值
+
+}
+</code></pre></body>
+</html>

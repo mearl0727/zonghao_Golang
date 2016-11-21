@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 關閉通道</title>
+</head>
+<body>
+<p>關閉通道的意思是該通道將不再允許寫入數據。這個方法可以讓通道數據的接受端知道數據已經全部發送完成了。</p>
+<pre><code>package main
+
+import "fmt"
+
+// 在這個例子中，我們使用通道jobs在main函數所在的協程和一個數據
+// 接收端所在的協程通信。當我們數據發送完成後，我們關閉jobs通道
+func main() {
+    jobs := make(chan int, 5)
+    done := make(chan bool)
+
+    // 這裡是數據接收端協程，它重復使用`j, more := &lt;-jobs`來從通道
+    // jobs獲取數據，這裡的more在通道關閉且通道中不再有數據可以接收的
+    // 時候為false，我們通過判斷more來決定所有的數據是否已經接收完成。
+    // 如果所有數據接收完成，那麼向done通道寫入true
+    go func() {
+        for {
+            j, more := &lt;-jobs
+            if more {
+                fmt.Println("received job", j)
+            } else {
+                fmt.Println("received all jobs")
+                done &lt;- true
+                return
+            }
+        }
+    }()
+
+    // 這裡向jobs通道寫入三個數據，然後關閉通道
+    for j := 1; j &lt;= 3; j++ {
+        jobs &lt;- j
+        fmt.Println("sent job", j)
+    }
+    close(jobs)
+    fmt.Println("sent all jobs")
+
+    // 我們知道done通道在接收數據的時候會阻塞，所以在所有的數據發送
+    // 接收完成後，寫入done的數據將在這裡被接收，然後程序結束。
+    &lt;-done
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>sent job 1
+received job 1
+sent job 2
+sent job 3
+sent all jobs
+received job 2
+received job 3
+received all jobs
+</code></pre></body>
+</html>

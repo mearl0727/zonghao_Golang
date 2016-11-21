@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go JSON支持</title>
+</head>
+<body>
+<p>Go內置了對JSON數據的編碼和解碼，這些數據的類型包括內置數據類型和自定義數據類型。</p>
+<pre><code>package main
+
+import "encoding/json"
+import "fmt"
+import "os"
+
+//  我們使用兩個結構體來演示自定義數據類型的JSON數據編碼和解碼。
+type Response1 struct {
+    Page   int
+    Fruits []string
+}
+type Response2 struct {
+    Page   int      `json:"page"`
+    Fruits []string `json:"fruits"`
+}
+
+func main() {
+
+    // 首先我們看一下將基礎數據類型編碼為JSON數據
+    bolB, _ := json.Marshal(true)
+    fmt.Println(string(bolB))
+
+    intB, _ := json.Marshal(1)
+    fmt.Println(string(intB))
+
+    fltB, _ := json.Marshal(2.34)
+    fmt.Println(string(fltB))
+
+    strB, _ := json.Marshal("gopher")
+    fmt.Println(string(strB))
+
+    // 這裡是將切片和字典編碼為JSON數組或對象
+    slcD := []string{"apple", "peach", "pear"}
+    slcB, _ := json.Marshal(slcD)
+    fmt.Println(string(slcB))
+
+    mapD := map[string]int{"apple": 5, "lettuce": 7}
+    mapB, _ := json.Marshal(mapD)
+    fmt.Println(string(mapB))
+
+    // JSON包可以自動地編碼自定義數據類型。結果將只包括自定義
+    // 類型中的可導出成員的值並且默認情況下，這些成員名稱都作
+    // 為JSON數據的鍵
+    res1D := &amp;Response1{
+        Page:   1,
+        Fruits: []string{"apple", "peach", "pear"}}
+    res1B, _ := json.Marshal(res1D)
+    fmt.Println(string(res1B))
+
+    // 你可以使用tag來自定義編碼後JSON鍵的名稱
+    res2D := &amp;Response2{
+        Page:   1,
+        Fruits: []string{"apple", "peach", "pear"}}
+    res2B, _ := json.Marshal(res2D)
+    fmt.Println(string(res2B))
+
+    // 現在我們看看解碼JSON數據為Go數值
+    byt := []byte(`{"num":6.13,"strs":["a","b"]}`)
+
+    // 我們需要提供一個變量來存儲解碼後的JSON數據，這裡
+    // 的`map[string]interface{}`將以Key-Value的方式
+    // 保存解碼後的數據，Value可以為任意數據類型
+    var dat map[string]interface{}
+
+    // 解碼過程，並檢測相關可能存在的錯誤
+    if err := json.Unmarshal(byt, &amp;dat); err != nil {
+        panic(err)
+    }
+    fmt.Println(dat)
+
+    // 為了使用解碼後map裡面的數據，我們需要將Value轉換為
+    // 它們合適的類型，例如我們將這裡的num轉換為期望的float64
+    num := dat["num"].(float64)
+    fmt.Println(num)
+
+    // 訪問嵌套的數據需要一些類型轉換
+    strs := dat["strs"].([]interface{})
+    str1 := strs[0].(string)
+    fmt.Println(str1)
+
+    // 我們還可以將JSON解碼為自定義數據類型，這有個好處是可以
+    // 為我們的程序增加額外的類型安全並且不用再在訪問數據的時候
+    // 進行類型斷言
+    str := `{"page": 1, "fruits": ["apple", "peach"]}`
+    res := &amp;Response2{}
+    json.Unmarshal([]byte(str), &amp;res)
+    fmt.Println(res)
+    fmt.Println(res.Fruits[0])
+
+    // 上面的例子中，我們使用bytes和strings來進行原始數據和JSON數據
+    // 之間的轉換，我們也可以直接將JSON編碼的數據流寫入`os.Writer`
+    // 或者是HTTP請求回復數據。
+    enc := json.NewEncoder(os.Stdout)
+    d := map[string]int{"apple": 5, "lettuce": 7}
+    enc.Encode(d)
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>true
+1
+2.34
+"gopher"
+["apple","peach","pear"]
+{"apple":5,"lettuce":7}
+{"Page":1,"Fruits":["apple","peach","pear"]}
+{"page":1,"fruits":["apple","peach","pear"]}
+map[num:6.13 strs:[a b]]
+6.13
+a
+&amp;{1 [apple peach]}
+apple
+{"apple":5,"lettuce":7}
+</code></pre></body>
+</html>

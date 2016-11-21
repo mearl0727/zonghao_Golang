@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 通道的同步功能</title>
+</head>
+<body>
+<p>我們使用通道來同步協程之間的執行。
+下面的例子是通過獲取同步通道數據來阻塞程序執行的方法來等待另一個協程運行結束的。
+也就是說main函數所在的協程在運行到<code>&lt;-done</code>語句的時候將一直等待worker函數所在的協程執行完成，向通道寫入數據才會（從通道獲得數據）繼續執行。</p>
+<pre><code>package main
+
+import "fmt"
+import "time"
+
+// 這個worker函數將以協程的方式運行
+// 通道`done`被用來通知另外一個協程這個worker函數已經執行完成
+func worker(done chan bool) {
+    fmt.Print("working...")
+    time.Sleep(time.Second)
+    fmt.Println("done")
+
+    // 向通道發送一個數據，表示worker函數已經執行完成
+    done &lt;- true
+}
+
+func main() {
+
+    // 使用協程來調用worker函數，同時將通道`done`傳遞給協程
+    // 以使得協程可以通知別的協程自己已經執行完成
+    done := make(chan bool, 1)
+    go worker(done)
+
+    // 一直阻塞，直到從worker所在協程獲得一個worker執行完成的數據
+    &lt;-done
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>working...done
+</code></pre>
+<p>如果我們從main函數裡面移除<code>&lt;-done</code>語句，那麼main函數在worker協程開始運行之前就結束了。</p></body>
+</html>

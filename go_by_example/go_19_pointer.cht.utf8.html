@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 指針</title>
+</head>
+<body>
+<p>Go支持指針，可以用來給函數傳遞變量的引用。</p>
+<pre><code>package main
+
+import "fmt"
+
+// 我們用兩個不同的例子來演示指針的用法
+// zeroval函數有一個int類型參數，這個時候傳遞給函數的是變量的值
+func zeroval(ival int) {
+    ival = 0
+}
+
+// zeroptr函數的參數是int類型指針，這個時候傳遞給函數的是變量的地址
+// 在函數內部對這個地址所指向的變量的任何修改都會反映到原來的變量上。
+func zeroptr(iptr *int) {
+    *iptr = 0
+}
+
+func main() {
+    i := 1
+    fmt.Println("initial:", i)
+
+    zeroval(i)
+    fmt.Println("zeroval:", i)
+
+    // &amp;操作符用來取得i變量的地址
+    zeroptr(&amp;i)
+    fmt.Println("zeroptr:", i)
+
+    // 指針類型也可以輸出
+    fmt.Println("pointer:", &amp;i)
+}
+</code></pre>
+<p>輸出結果為</p>
+<pre><code>initial: 1
+zeroval: 1
+zeroptr: 0
+pointer: 0xc084000038
+</code></pre></body>
+</html>

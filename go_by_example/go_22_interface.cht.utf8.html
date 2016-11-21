@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 接口</title>
+</head>
+<body>
+<p>接口是一個方法簽名的集合。
+所謂方法簽名，就是指方法的聲明，而不包括實現。</p>
+<pre><code>package main
+
+import "fmt"
+import "math"
+
+// 這裡定義了一個最基本的表示幾何形狀的方法的接口
+type geometry interface {
+    area() float64
+    perim() float64
+}
+
+// 這裡我們要讓正方形square和圓形circle實現這個接口
+type square struct {
+    width, height float64
+}
+type circle struct {
+    radius float64
+}
+
+// 在Go中實現一個接口，只要實現該接口定義的所有方法即可
+// 下面是正方形實現的接口
+func (s square) area() float64 {
+    return s.width * s.height
+}
+func (s square) perim() float64 {
+    return 2*s.width + 2*s.height
+}
+
+// 圓形實現的接口
+func (c circle) area() float64 {
+    return math.Pi * c.radius * c.radius
+}
+func (c circle) perim() float64 {
+    return 2 * math.Pi * c.radius
+}
+
+// 如果一個函數的參數是接口類型，那麼我們可以使用命名接口
+// 來調用這個函數
+// 比如這裡的正方形square和圓形circle都實現了接口geometry，
+// 那麼它們都可以作為這個參數為geometry類型的函數的參數。
+// 在measure函數內部，Go知道調用哪個結構體實現的接口方法。
+func measure(g geometry) {
+    fmt.Println(g)
+    fmt.Println(g.area())
+    fmt.Println(g.perim())
+}
+
+func main() {
+    s := square{width: 3, height: 4}
+    c := circle{radius: 5}
+
+    // 這裡circle和square都實現了geometry接口，所以
+    // circle類型變量和square類型變量都可以作為measure
+    // 函數的參數
+    measure(s)
+    measure(c)
+}
+</code></pre>
+<p>輸出結果為</p>
+<pre><code>{3 4}
+12
+14
+{5}
+78.53981633974483
+31.41592653589793
+</code></pre>
+<p>也就是說如果結構體A實現了接口B定義的所有方法，那麼A也是B類型。</p></body>
+</html>

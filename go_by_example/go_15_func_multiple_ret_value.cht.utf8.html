@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 函數多返回值</title>
+</head>
+<body>
+<p>Go語言內置支持多返回值，這個在Go語言中用的很多，比如一個函數同時返回結果和錯誤信息。</p>
+<pre><code>package main
+
+import "fmt"
+
+// 這個函數的返回值為兩個int
+func vals() (int, int) {
+    return 3, 7
+}
+
+func main() {
+
+    // 獲取函數的兩個返回值
+    a, b := vals()
+    fmt.Println(a)
+    fmt.Println(b)
+
+    // 如果你只對多個返回值裡面的幾個感興趣
+    // 可以使用下劃線(_)來忽略其他的返回值
+    _, c := vals()
+    fmt.Println(c)
+}
+</code></pre>
+<p>輸出結果為</p>
+<pre><code>3
+7
+7
+</code></pre></body>
+</html>

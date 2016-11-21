@@ -1,0 +1,602 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go結構體和指針</title>
+
+</head>
+<body>
+<p>基本上到這裡的時候，就是上了一個台階了。Go的精華特點即將展開。</p>
+
+<p><strong>結構體定義</strong></p>
+
+<p>上面我們說過Go的指針和C的不同，結構體也是一樣的。Go是一門刪繁就簡的語言，一切令人困惑的特性都必須去掉。</p>
+
+<p>簡單來講，Go提供的<code>結構體</code>就是把<code>使用各種數據類型定義</code>的<code>不同變量組合起來</code>的<code>高級數據類型</code>。閑話不多說，看例子:</p>
+
+<pre><code>type Rect struct {
+    width float64
+    length float64
+}
+</code></pre>
+
+<p>上面我們定義了一個矩形結構體，首先是關鍵是<code>type</code>表示要<code>定義一個新的數據類型了</code>，然後是新的數據類型名稱<code>Rect</code>，最後是<code>struct</code>關鍵字，表示這個高級數據類型是結構體類型。在上面的例子中，因為<code>width和length的數據類型相同</code>，還可以寫成如下格式：</p>
+
+<pre><code>type Rect struct {
+    width, length float64
+}
+</code></pre>
+
+<p>好了，來用結構體幹點啥吧，計算一下矩形面積。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Rect struct {
+    width, length float64
+}
+
+func main() {
+    var rect Rect
+    rect.width = 100
+    rect.length = 200
+    fmt.Println(rect.width * rect.length)
+}
+</code></pre>
+
+<p>從上面的例子看到，其實結構體類型和基礎數據類型使用方式差不多，唯一的區別就是結構體類型可以通過<code>.</code>來訪問內部的成員。包括<code>給內部成員賦值</code>和<code>讀取內部成員值</code>。</p>
+
+<p>在上面的例子中，我們是用var關鍵字先定義了一個Rect變量，然後對它的成員賦值。我們也可以使用初始化的方式來給Rect變量的內部成員賦值。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Rect struct {
+    width, length float64
+}
+
+func main() {
+    var rect = Rect{width: 100, length: 200}
+
+    fmt.Println(rect.width * rect.length)
+}
+</code></pre>
+
+<p>當然<code>如果你知道結構體成員定義的順序</code>，也可以不使用<code>key:value</code>的方式賦值，<code>直接按照結構體成員定義的順序給它們賦值</code>。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Rect struct {
+    width, length float64
+}
+
+func main() {
+    var rect = Rect{100, 200}
+
+    fmt.Println("Width:", rect.width, "* Length:",
+        rect.length, "= Area:", rect.width*rect.length)
+}
+</code></pre>
+
+<p>輸出結果為</p>
+
+<pre><code>Width: 100 * Length: 200 = Area: 20000
+</code></pre>
+
+<p><strong>結構體參數傳遞方式</strong></p>
+
+<p>我們說過，<code>Go函數的參數傳遞方式是值傳遞</code>，這句話<code>對結構體也是適用的</code>。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Rect struct {
+    width, length float64
+}
+
+func double_area(rect Rect) float64 {
+    rect.width *= 2
+    rect.length *= 2
+    return rect.width * rect.length
+}
+func main() {
+    var rect = Rect{100, 200}
+    fmt.Println(double_area(rect))
+    fmt.Println("Width:", rect.width, "Length:", rect.length)
+}
+</code></pre>
+
+<p>上面的例子輸出為:</p>
+
+<pre><code>80000
+Width: 100 Length: 200
+</code></pre>
+
+<p>也就說雖然在double_area函數裡面我們將結構體的寬度和長度都加倍，但仍然沒有影響main函數裡面的rect變量的寬度和長度。</p>
+
+<p><strong>結構體組合函數</strong></p>
+
+<p>上面我們在main函數中計算了矩形的面積，但是我們覺得矩形的面積如果能夠作為矩形結構體的「內部函數」提供會更好。這樣我們就可以直接說這個矩形面積是多少，而不用另外去取寬度和長度去計算。現在我們看看結構體「內部函數」定義方法：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Rect struct {
+    width, length float64
+}
+
+func (rect Rect) area() float64 {
+    return rect.width * rect.length
+}
+
+func main() {
+    var rect = Rect{100, 200}
+
+    fmt.Println("Width:", rect.width, "Length:", rect.length,
+        "Area:", rect.area())
+}
+</code></pre>
+
+<p>咦？這個是什麼「內部方法」，根本沒有定義在Rect數據類型的內部啊？</p>
+
+<p>確實如此，我們看到，雖然main函數中的rect變量可以直接調用函數area()來獲取矩形面積，但是area()函數確實沒有定義在Rect結構體內部，這點和C語言的有很大不同。<code>Go使用組合函數的方式來為結構體定義結構體方法</code>。我們仔細看一下上面的area()函數定義。</p>
+
+<p>首先是關鍵字<code>func</code>表示這是一個函數，第二個參數是<code>結構體類型和實例變量</code>，第三個是<code>函數名稱</code>，第四個是<code>函數返回值</code>。這裡我們可以看出area()函數和普通函數定義的<code>區別就在於</code>area()函數<code>多了一個結構體類型限定</code>。這樣一來Go就知道了這是一個為結構體定義的<code>方法</code>。</p>
+
+<p>這裡需要注意一點就是<code>定義在結構體上面的函數(function)</code>一般叫做<code>方法(method)</code>。</p>
+
+<p><strong>結構體和指針</strong></p>
+
+<p>我們在指針一節講到過，<code>指針的主要作用就是在函數內部改變傳遞進來變量的值</code>。對於上面的計算矩形面積的例子，我們可以修改一下代碼如下：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Rect struct {
+    width, length float64
+}
+
+func (rect *Rect) area() float64 {
+    return rect.width * rect.length
+}
+
+func main() {
+    var rect = new(Rect)
+    rect.width = 100
+    rect.length = 200
+    fmt.Println("Width:", rect.width, "Length:", rect.length,
+        "Area:", rect.area())
+}
+</code></pre>
+
+<p>上面的例子中，使用了new函數來創建一個結構體指針rect，也就是說rect的類型是*Rect，結構體遇到指針的時候，你<code>不需要使用*去訪問結構體的成員</code>，直接使用<code>.</code>引用就可以了。所以上面的例子中我們直接使用<code>rect.width=100</code> 和<code>rect.length=200</code>來設置結構體成員值。因為這個時候rect是結構體指針，所以我們定義area()函數的時候結構體限定類型為<code>*Rect</code>。</p>
+
+<p>其實在計算面積的這個例子中，我們不需要改變矩形的寬或者長度，所以定義area函數的時候結構體限定類型仍然為<code>Rect</code>也是可以的。如下：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Rect struct {
+    width, length float64
+}
+
+func (rect Rect) area() float64 {
+    return rect.width * rect.length
+}
+
+func main() {
+    var rect = new(Rect)
+    rect.width = 100
+    rect.length = 200
+    fmt.Println("Width:", rect.width, "Length:", rect.length,
+        "Area:", rect.area())
+}
+</code></pre>
+
+<p>這裡Go足夠聰明，所以rect.area()也是可以的。</p>
+
+<p>至於<code>使不使用結構體指針和使不使用指針的出發點是一樣的</code>，那就是<code>你是否試圖在函數內部改變傳遞進來的參數的值</code>。再舉個例子如下：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Rect struct {
+    width, length float64
+}
+
+func (rect *Rect) double_area() float64 {
+    rect.width *= 2
+    rect.length *= 2
+    return rect.width * rect.length
+}
+
+func main() {
+    var rect = new(Rect)
+    rect.width = 100
+    rect.length = 200
+    fmt.Println(*rect)
+    fmt.Println("Double Width:", rect.width, "Double Length:", rect.length,
+        "Double Area:", rect.double_area())
+    fmt.Println(*rect)
+}
+</code></pre>
+
+<p>這個例子的輸出是：</p>
+
+<pre><code>{100 200}
+Double Width: 200 Double Length: 400 Double Area: 80000
+{200 400}
+</code></pre>
+
+<p><strong>結構體內嵌類型</strong></p>
+
+<p>我們可以在一個<code>結構體內部定義另外一個結構體類型的成員</code>。例如iPhone也是Phone，我們看下例子：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Phone struct {
+    price int
+    color string
+}
+
+type IPhone struct {
+    phone Phone
+    model string
+}
+
+func main() {
+    var p IPhone
+    p.phone.price = 5000
+    p.phone.color = "Black"
+    p.model = "iPhone 5"
+    fmt.Println("I have a iPhone:")
+    fmt.Println("Price:", p.phone.price)
+    fmt.Println("Color:", p.phone.color)
+    fmt.Println("Model:", p.model)
+}
+</code></pre>
+
+<p>輸出結果為</p>
+
+<pre><code>I have a iPhone:
+Price: 5000
+Color: Black
+Model: iPhone 5
+</code></pre>
+
+<p>在上面的例子中，我們在結構體IPhone裡面定義了一個Phone變量phone，然後我們可以像正常的訪問結構體成員一樣訪問phone的成員數據。但是我們原來的意思是<code>「iPhone也是(is-a)Phone」</code>，而這裡的結構體IPhone裡面定義了一個phone變量，給人的感覺就是<code>「iPhone有一個(has-a)Phone」</code>，挺奇怪的。當然Go也知道這種方式很奇怪，所以支持如下做法：</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Phone struct {
+    price int
+    color string
+}
+
+type IPhone struct {
+    Phone
+    model string
+}
+
+func main() {
+    var p IPhone
+    p.price = 5000
+    p.color = "Black"
+    p.model = "iPhone 5"
+    fmt.Println("I have a iPhone:")
+    fmt.Println("Price:", p.price)
+    fmt.Println("Color:", p.color)
+    fmt.Println("Model:", p.model)
+}
+</code></pre>
+
+<p>輸出結果為</p>
+
+<pre><code>I have a iPhone:
+Price: 5000
+Color: Black
+Model: iPhone 5
+</code></pre>
+
+<p>在這個例子中，我們定義IPhone結構體的時候，<code>不再定義Phone變量</code>，<code>直接把結構體Phone類型定義在那裡</code>。然後IPhone就可以<code>像訪問直接定義在自己結構體裡面的成員一樣訪問Phone的成員</code>。</p>
+
+<p>上面的例子中，我們演示了結構體的內嵌類型以及內嵌類型的成員訪問，除此之外，假設結構體A內部定義了一個內嵌結構體B，那麼A同時也可以調用所有定義在B上面的函數。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Phone struct {
+    price int
+    color string
+}
+
+func (phone Phone) ringing() {
+    fmt.Println("Phone is ringing...")
+}
+
+type IPhone struct {
+    Phone
+    model string
+}
+
+func main() {
+    var p IPhone
+    p.price = 5000
+    p.color = "Black"
+    p.model = "iPhone 5"
+    fmt.Println("I have a iPhone:")
+    fmt.Println("Price:", p.price)
+    fmt.Println("Color:", p.color)
+    fmt.Println("Model:", p.model)
+
+    p.ringing()
+}
+</code></pre>
+
+<p>輸出結果為：</p>
+
+<pre><code>I have a iPhone:
+Price: 5000
+Color: Black
+Model: iPhone 5
+Phone is ringing...
+</code></pre>
+
+<p><strong>接口</strong></p>
+
+<p>我們先看一個例子，關於Nokia手機和iPhone手機都能夠打電話的例子。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type NokiaPhone struct {
+}
+
+func (nokiaPhone NokiaPhone) call() {
+    fmt.Println("I am Nokia, I can call you!")
+}
+
+type IPhone struct {
+}
+
+func (iPhone IPhone) call() {
+    fmt.Println("I am iPhone, I can call you!")
+}
+func main() {
+    var nokia NokiaPhone
+    nokia.call()
+
+    var iPhone IPhone
+    iPhone.call()
+}
+</code></pre>
+
+<p>我們定義了NokiaPhone和IPhone，它們都有各自的方法call()，表示自己都能夠打電話。但是我們想一想，是手機都應該能夠打電話，所以這個不算是NokiaPhone或是IPhone的獨特特點。否則iPhone不可能賣這麼貴了。</p>
+
+<p>再仔細看一下<code>接口的定義</code>，首先是關鍵字<code>type</code>，然後是<code>接口名稱</code>，最後是關鍵字<code>interface</code>表示這個類型是接口類型。<code>在接口類型裡面，我們定義了一組方法</code>。</p>
+
+<p>Go語言提供了一種接口功能，它把所有的具有共性的方法定義在一起，<code>任何其他類型只要實現了這些方法就是實現了這個接口</code>，<code>不一定非要顯式地聲明</code>要去實現哪些接口啦。比如上面的手機的call()方法，就完全可以定義在接口Phone裡面，而NokiaPhone和IPhone只要實現了這個接口就是一個Phone。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Phone interface {
+    call()
+}
+
+type NokiaPhone struct {
+}
+
+func (nokiaPhone NokiaPhone) call() {
+    fmt.Println("I am Nokia, I can call you!")
+}
+
+type IPhone struct {
+}
+
+func (iPhone IPhone) call() {
+    fmt.Println("I am iPhone, I can call you!")
+}
+
+func main() {
+    var phone Phone
+
+    phone = new(NokiaPhone)
+    phone.call()
+
+    phone = new(IPhone)
+    phone.call()
+
+}
+</code></pre>
+
+<p>在上面的例子中，我們定義了一個接口Phone，接口裡面有一個方法call()，僅此而已。然後我們在main函數裡面定義了一個Phone類型變量，並分別為之賦值為NokiaPhone和IPhone。然後調用call()方法，輸出結果如下：</p>
+
+<pre><code>I am Nokia, I can call you!
+I am iPhone, I can call you!
+</code></pre>
+
+<p>以前我們說過，<code>Go語言是靜態類型語言，變量的類型在運行過程中不能改變</code>。但是在上面的例子中，phone變量好像先定義為Phone類型，然後是NokiaPhone類型，最後成為了IPhone類型，真的是這樣嗎？</p>
+
+<p>原來，在Go語言裡面，<code>一個類型A只要實現了接口X所定義的全部方法</code>，那麼<code>A類型的變量</code>也是<code>X類型的變量</code>。在上面的例子中，NokiaPhone和IPhone都實現了Phone接口的call()方法，所以它們都是Phone，這樣一來是不是感覺正常了一些。</p>
+
+<p>我們為Phone添加一個方法sales()，再來熟悉一下接口用法。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Phone interface {
+    call()
+    sales() int
+}
+
+type NokiaPhone struct {
+    price int
+}
+
+func (nokiaPhone NokiaPhone) call() {
+    fmt.Println("I am Nokia, I can call you!")
+}
+func (nokiaPhone NokiaPhone) sales() int {
+    return nokiaPhone.price
+}
+
+type IPhone struct {
+    price int
+}
+
+func (iPhone IPhone) call() {
+    fmt.Println("I am iPhone, I can call you!")
+}
+
+func (iPhone IPhone) sales() int {
+    return iPhone.price
+}
+
+func main() {
+    var phones = [5]Phone{
+        NokiaPhone{price: 350},
+        IPhone{price: 5000},
+        IPhone{price: 3400},
+        NokiaPhone{price: 450},
+        IPhone{price: 5000},
+    }
+
+    var totalSales = 0
+    for _, phone := range phones {
+        totalSales += phone.sales()
+    }
+    fmt.Println(totalSales)
+
+}
+</code></pre>
+
+<p>輸出結果：</p>
+
+<pre><code>14200
+</code></pre>
+
+<p>上面的例子中，我們定義了一個手機數組，然後計算手機的總售價。可以看到，由於NokiaPhone和IPhone都實現了sales()方法，所以它們都是Phone類型，但是計算售價的時候，Go會知道調用哪個對象實現的方法。</p>
+
+<p>接口類型還可以作為結構體的數據成員。</p>
+
+<p>假設有個敗家子，iPhone沒有出的時候，買了好幾款Nokia，iPhone出來後，又買了好多部iPhone，老爸要來看看這小子一共花了多少錢。</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+)
+
+type Phone interface {
+    sales() int
+}
+
+type NokiaPhone struct {
+    price int
+}
+
+func (nokiaPhone NokiaPhone) sales() int {
+    return nokiaPhone.price
+}
+
+type IPhone struct {
+    price int
+}
+
+func (iPhone IPhone) sales() int {
+    return iPhone.price
+}
+
+type Person struct {
+    phones []Phone
+    name   string
+    age    int
+}
+
+func (person Person) total_cost() int {
+    var sum = 0
+    for _, phone := range person.phones {
+        sum += phone.sales()
+    }
+    return sum
+}
+
+func main() {
+    var bought_phones = [5]Phone{
+        NokiaPhone{price: 350},
+        IPhone{price: 5000},
+        IPhone{price: 3400},
+        NokiaPhone{price: 450},
+        IPhone{price: 5000},
+    }
+
+    var person = Person{name: "Jemy", age: 25, phones: bought_phones[:]}
+
+    fmt.Println(person.name)
+    fmt.Println(person.age)
+    fmt.Println(person.total_cost())
+}
+</code></pre>
+
+<p>這個例子純為演示接口作為結構體數據成員，如有雷同，純屬巧合。這裡面我們定義了一個Person結構體，結構體內部定義了一個手機類型切片。另外我們定義了Person的total_cost()方法用來計算手機花費總額。輸出結果如下：</p>
+
+<pre><code>Jemy
+25
+14200
+</code></pre>
+
+<p><strong>小結</strong></p>
+
+<p>Go的結構體和接口的實現方法可謂刪繁就簡，去除了很多別的語言令人困惑的地方，而且學習難度也不大，很容易上手。不過由於思想比較獨到，也有可能會有人覺得功能太簡單而無用，這個就各有看法了，不過在逐漸的使用過程中，我們會慢慢領悟到這種設計所帶來的好處，以及所避免的問題。</p>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 並行通道Channel</title>
+</head>
+<body>
+<p>Channel是連接並行協程(goroutine)的通道。你可以向一個通道寫入數據然後從另外一個通道讀取數據。</p>
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+
+    // 使用`make(chan 數據類型)`來創建一個Channel
+    // Channel的類型就是它們所傳遞的數據的類型
+    messages := make(chan string)
+
+    // 使用`channel &lt;-`語法來向一個Channel寫入數據
+    // 這裡我們從一個新的協程向messages通道寫入數據ping
+    go func() { messages &lt;- "ping" }()
+
+    // 使用`&lt;-channel`語法來從Channel讀取數據
+    // 這裡我們從main函數所在的協程來讀取剛剛寫入
+    // messages通道的數據
+    msg := &lt;-messages
+    fmt.Println(msg)
+}
+</code></pre>
+<p>運行結果</p>
+<pre><code>ping
+</code></pre>
+<p>當我們運行程序的時候，數據ping成功地從一個協程傳遞到了另外一個協程。
+默認情況下，協程之間的通信是同步的，也就是說數據的發送端和接收端必須配對使用。Channel的這種特點使得我們可以不用在程序結尾添加額外的代碼也能夠獲取協程發送端發來的信息。因為程序執行到<code>msg:=&lt;-messages</code>的時候被阻塞了，直到獲得發送端發來的信息才繼續執行。</p></body>
+</html>

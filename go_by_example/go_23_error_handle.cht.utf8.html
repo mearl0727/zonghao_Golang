@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" href="default.css">
+<script src="highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>Go 錯誤處理</title>
+</head>
+<body>
+<p>在Go裡面通常采用顯式返回錯誤代碼的方式來進行錯誤處理。這個和Java或者Ruby裡面使用異常或者是C裡面運行正常返回結果，發生錯誤返回錯誤代碼的方式不同。Go的這種錯誤處理的方式使得我們能夠很容易看出哪些函數可能返回錯誤，並且能夠像調用那些沒有錯誤返回的函數一樣調用。</p>
+<pre><code>package main
+
+import "errors"
+import "fmt"
+
+// Go語言裡面約定錯誤代碼是函數的最後一個返回值，
+// 並且類型是error，這是一個內置的接口
+
+func f1(arg int) (int, error) {
+    if arg == 42 {
+
+        // errors.New使用錯誤信息作為參數，構建一個基本的錯誤
+        return -1, errors.New("can't work with 42")
+
+    }
+
+    // 返回錯誤為nil表示沒有錯誤
+    return arg + 3, nil
+}
+
+// 你可以通過實現error接口的方法Error()來自定義錯誤
+// 下面我們自定義一個錯誤類型來表示上面例子中的參數錯誤
+type argError struct {
+    arg  int
+    prob string
+}
+
+func (e *argError) Error() string {
+    return fmt.Sprintf("%d - %s", e.arg, e.prob)
+}
+
+func f2(arg int) (int, error) {
+    if arg == 42 {
+
+        // 這裡我們使用&amp;argError語法來創建一個新的結構體對象，
+        // 並且給它的成員賦值
+        return -1, &amp;argError{arg, "can't work with it"}
+    }
+    return arg + 3, nil
+}
+
+func main() {
+
+    // 下面的兩個循環例子用來測試我們的帶有錯誤返回值的函數
+    // 在for循環語句裡面，使用了if來判斷函數返回值是否為nil是
+    // Go語言裡面的一種約定做法。
+    for _, i := range []int{7, 42} {
+        if r, e := f1(i); e != nil {
+            fmt.Println("f1 failed:", e)
+        } else {
+            fmt.Println("f1 worked:", r)
+        }
+    }
+    for _, i := range []int{7, 42} {
+        if r, e := f2(i); e != nil {
+            fmt.Println("f2 failed:", e)
+        } else {
+            fmt.Println("f2 worked:", r)
+        }
+    }
+
+    // 如果你需要使用自定義錯誤類型返回的錯誤數據，你需要使用類型斷言
+    // 來獲得一個自定義錯誤類型的實例才行。
+    _, e := f2(42)
+    if ae, ok := e.(*argError); ok {
+        fmt.Println(ae.arg)
+        fmt.Println(ae.prob)
+    }
+}
+</code></pre>
+<p>運行結果為</p>
+<pre><code>f1 worked: 10
+f1 failed: can't work with 42
+f2 worked: 10
+f2 failed: 42 - can't work with it
+42
+can't work with it
+</code></pre></body>
+</html>
